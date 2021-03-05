@@ -643,10 +643,22 @@ export default App.directive('pdfViewer', ($q, $timeout, pdfSpinner) => ({
     }
 
     scope.$watch('pdfSrc', function(newVal, oldVal) {
-      // console.log 'loading pdf', newVal, oldVal
+      console.log('loading pdf', newVal, oldVal)
       if (newVal == null) {
+        console.warn("newVal is null", oldVal)
         return
       }
+
+      setInterval(() => {
+        ctrl
+          .load()
+          .then(() => {
+            scope.scale = angular.copy(scope.scale)
+            console.log("Document updated at interval")
+          })
+          .catch(error => console.error(error))
+      }, 1000)
+
       scope.loadCount = 0 // new pdf, so reset load count
       scope.loadSuccess = false
       return ctrl
