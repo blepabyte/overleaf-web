@@ -11,6 +11,9 @@ block content
 					.card
 						.page-header
 							h1 #{translate("log_in")}
+
+							p bottom text
+
 						form(async-form="login", name="loginForm", action='/login', method="POST", ng-cloak)
 							input(name='_csrf', type='hidden', value=csrfToken)
 							form-messages(for="loginForm")
@@ -45,3 +48,6 @@ block content
 									span(ng-show="!loginForm.inflight") #{translate("login")}
 									span(ng-show="loginForm.inflight") #{translate("logging_in")}…
 								a.pull-right(href='/user/password/reset') #{translate("forgot_your_password")}?
+	
+	.script
+		console.log("Testing if this gets included in the Docker build...")
