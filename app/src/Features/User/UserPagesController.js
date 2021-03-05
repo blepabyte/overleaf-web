@@ -30,15 +30,19 @@ const UserPagesController = {
   loginPage(req, res) {
     // if user is being sent to /login with explicit redirect (redir=/foo),
     // such as being sent from the editor to /login, then set the redirect explicitly
+    let isRedirected = false
+
     if (
       req.query.redir != null &&
       AuthenticationController._getRedirectFromSession(req) == null
     ) {
+      isRedirected = true
       AuthenticationController.setRedirectInSession(req, req.query.redir)
     }
     res.render('user/login', {
       title: 'login',
-      email: req.query.email
+      email: req.query.email,
+      isRedirected
     })
   },
 
