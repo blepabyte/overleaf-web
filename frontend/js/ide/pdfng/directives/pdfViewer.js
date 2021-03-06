@@ -650,6 +650,13 @@ export default App.directive('pdfViewer', ($q, $timeout, pdfSpinner) => ({
       }
 
       window.fuckingForcePDFReload = () => {
+        if (newVal == null) {
+          console.warn("force reload: newVal is null", oldVal)
+          return
+        }
+
+        scope.loadCount = 0 // new pdf, so reset load count
+        scope.loadSuccess = false
         ctrl
           .load()
           .then(() => {
@@ -662,7 +669,7 @@ export default App.directive('pdfViewer', ($q, $timeout, pdfSpinner) => ({
           })
       }
 
-      setInterval(() => window.fuckingForcePDFReload(), 60000)
+      // setInterval(() => window.fuckingForcePDFReload(), 60000)
 
       scope.loadCount = 0 // new pdf, so reset load count
       scope.loadSuccess = false
