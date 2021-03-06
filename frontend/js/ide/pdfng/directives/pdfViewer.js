@@ -649,16 +649,20 @@ export default App.directive('pdfViewer', ($q, $timeout, pdfSpinner) => ({
         return
       }
 
-      setInterval(() => {
+      window.fuckingForcePDFReload = () => {
         ctrl
           .load()
           .then(() => {
-            console.log('Interval loaded', newVal, oldVal)
             scope.scale = angular.copy(scope.scale)
-            console.log("Document updated at interval")
+            console.log("Forced PDF reload")
           })
-          .catch(error => console.error(error))
-      }, 37000)
+          .catch(error => {
+            console.error("Forced PDF reload failed")
+            console.error(error)
+          })
+      }
+
+      setInterval(() => window.fuckingForcePDFReload(), 60000)
 
       scope.loadCount = 0 // new pdf, so reset load count
       scope.loadSuccess = false

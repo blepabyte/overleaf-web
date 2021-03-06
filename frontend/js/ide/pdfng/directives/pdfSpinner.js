@@ -35,6 +35,7 @@ export default App.factory('pdfSpinner', function() {
     }
 
     stop(element) {
+      window.fuckingForcePDFReload()
       return element.find('.fa-spinner').removeClass('fa-spin')
     }
 
