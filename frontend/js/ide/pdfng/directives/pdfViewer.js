@@ -103,6 +103,8 @@ App.controller('pdfViewerController', function(
         })
         .catch(function(error) {
           $scope.$emit('pdf:error', error)
+          console.log("scope emitted error")
+          console.error(error)
           return $q.reject(error)
         })
 
@@ -650,6 +652,14 @@ export default App.directive('pdfViewer', ($q, $timeout, pdfSpinner) => ({
       }
 
       window.fuckingForcePDFReload = () => {
+        let stamp = () => new Date().getTime() / 1000
+        
+        if (window.lastForcedPDF && stamp() - window.lastForcedPDF < 3) {
+          console.log("force reload cancelled by temporary rate limit")
+          return
+        }
+        window.lastForcedPDF = stamp()
+
         if (newVal == null) {
           console.warn("force reload: newVal is null", oldVal)
           return
@@ -664,7 +674,9 @@ export default App.directive('pdfViewer', ($q, $timeout, pdfSpinner) => ({
             console.log("Forced PDF reload")
           })
           .catch(error => {
-            console.error("Forced PDF reload failed")
+            console.error("Forced PDF reload failed, suppressing error")
+            // just ignore the errors: possibly because refresh button stopped spinning before the server finished compiling so URL not found?
+            // scope.$emit('pdf:error', error)
             console.error(error)
           })
       }
