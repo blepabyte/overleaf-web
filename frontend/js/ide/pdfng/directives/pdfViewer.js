@@ -653,20 +653,23 @@ export default App.directive('pdfViewer', ($q, $timeout, pdfSpinner) => ({
         ctrl
           .load()
           .then(() => {
+            console.log('Interval loaded', newVal, oldVal)
             scope.scale = angular.copy(scope.scale)
             console.log("Document updated at interval")
           })
           .catch(error => console.error(error))
-      }, 1000)
+      }, 37000)
 
       scope.loadCount = 0 // new pdf, so reset load count
       scope.loadSuccess = false
       return ctrl
         .load()
         .then(
-          () =>
+          () => {
+            console.log('Actually loaded', newVal, oldVal)
             // trigger a redraw
             (scope.scale = angular.copy(scope.scale))
+          }
         )
         .catch(error => scope.$emit('pdf:error', error))
     })
