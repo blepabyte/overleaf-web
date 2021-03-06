@@ -1,14 +1,28 @@
+/* eslint-disable
+    max-len,
+    no-return-assign,
+    no-unused-vars,
+*/
+// TODO: This file was created by bulk-decaffeinate.
+// Fix any style issues and re-enable lint.
+/*
+ * decaffeinate suggestions:
+ * DS102: Remove unnecessary code created because of implicit returns
+ * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
+ */
 const SandboxedModule = require('sandboxed-module')
+const should = require('chai').should()
 const { expect } = require('chai')
 const sinon = require('sinon')
 const modulePath = '../../../../app/src/Features/Subscription/FeaturesUpdater'
+const { assert } = require('chai')
 const { ObjectId } = require('mongodb')
 
 describe('FeaturesUpdater', function() {
   beforeEach(function() {
     this.user_id = ObjectId().toString()
 
-    this.FeaturesUpdater = SandboxedModule.require(modulePath, {
+    return (this.FeaturesUpdater = SandboxedModule.require(modulePath, {
       globals: {
         console: console
       },
@@ -29,7 +43,7 @@ describe('FeaturesUpdater', function() {
           hooks: { fire: sinon.stub() }
         })
       }
-    })
+    }))
   })
 
   describe('refreshFeatures', function() {
@@ -58,51 +72,51 @@ describe('FeaturesUpdater', function() {
         .stub()
         .returns({ merged: 'features' })
       this.UserGetter.getUser = sinon.stub().yields(null, this.user)
-      this.callback = sinon.stub()
+      return (this.callback = sinon.stub())
     })
     describe('normally', function() {
       beforeEach(function() {
-        this.FeaturesUpdater.refreshFeatures(this.user_id, this.callback)
+        return this.FeaturesUpdater.refreshFeatures(this.user_id, this.callback)
       })
 
       it('should get the individual features', function() {
-        this.FeaturesUpdater._getIndividualFeatures
+        return this.FeaturesUpdater._getIndividualFeatures
           .calledWith(this.user_id)
           .should.equal(true)
       })
 
       it('should get the group features', function() {
-        this.FeaturesUpdater._getGroupFeatureSets
+        return this.FeaturesUpdater._getGroupFeatureSets
           .calledWith(this.user_id)
           .should.equal(true)
       })
 
       it('should get the institution features', function() {
-        this.InstitutionsFeatures.getInstitutionsFeatures
+        return this.InstitutionsFeatures.getInstitutionsFeatures
           .calledWith(this.user_id)
           .should.equal(true)
       })
 
       it('should get the v1 features', function() {
-        this.FeaturesUpdater._getV1Features
+        return this.FeaturesUpdater._getV1Features
           .calledWith(this.user_id)
           .should.equal(true)
       })
 
       it('should get the bonus features', function() {
-        this.ReferalFeatures.getBonusFeatures
+        return this.ReferalFeatures.getBonusFeatures
           .calledWith(this.user_id)
           .should.equal(true)
       })
 
       it('should merge from the default features', function() {
-        this.FeaturesUpdater._mergeFeatures
+        return this.FeaturesUpdater._mergeFeatures
           .calledWith(this.Settings.defaultFeatures)
           .should.equal(true)
       })
 
       it('should merge the individual features', function() {
-        this.FeaturesUpdater._mergeFeatures
+        return this.FeaturesUpdater._mergeFeatures
           .calledWith(sinon.match.any, { individual: 'features' })
           .should.equal(true)
       })
@@ -111,31 +125,31 @@ describe('FeaturesUpdater', function() {
         this.FeaturesUpdater._mergeFeatures
           .calledWith(sinon.match.any, { group: 'features' })
           .should.equal(true)
-        this.FeaturesUpdater._mergeFeatures
+        return this.FeaturesUpdater._mergeFeatures
           .calledWith(sinon.match.any, { group: 'features2' })
           .should.equal(true)
       })
 
       it('should merge the institutions features', function() {
-        this.FeaturesUpdater._mergeFeatures
+        return this.FeaturesUpdater._mergeFeatures
           .calledWith(sinon.match.any, { institutions: 'features' })
           .should.equal(true)
       })
 
       it('should merge the v1 features', function() {
-        this.FeaturesUpdater._mergeFeatures
+        return this.FeaturesUpdater._mergeFeatures
           .calledWith(sinon.match.any, { v1: 'features' })
           .should.equal(true)
       })
 
       it('should merge the bonus features', function() {
-        this.FeaturesUpdater._mergeFeatures
+        return this.FeaturesUpdater._mergeFeatures
           .calledWith(sinon.match.any, { bonus: 'features' })
           .should.equal(true)
       })
 
       it('should update the user with the merged features', function() {
-        this.UserFeaturesUpdater.updateFeatures
+        return this.UserFeaturesUpdater.updateFeatures
           .calledWith(this.user_id, { merged: 'features' })
           .should.equal(true)
       })
@@ -150,7 +164,7 @@ describe('FeaturesUpdater', function() {
         this.FeaturesUpdater._mergeFeatures = sinon
           .stub()
           .returns({ dropbox: false })
-        this.FeaturesUpdater.refreshFeatures(this.user_id, this.callback)
+        return this.FeaturesUpdater.refreshFeatures(this.user_id, this.callback)
       })
       it('should fire module hook to unlink dropbox', function() {
         this.Modules.hooks.fire
@@ -198,7 +212,7 @@ describe('FeaturesUpdater', function() {
       ).to.deep.equal({
         compileGroup: 'priority'
       })
-      expect(
+      return expect(
         this.FeaturesUpdater._mergeFeatures(
           {
             compileGroup: 'standard'
@@ -237,7 +251,7 @@ describe('FeaturesUpdater', function() {
       ).to.deep.equal({
         collaborators: -1
       })
-      expect(
+      return expect(
         this.FeaturesUpdater._mergeFeatures(
           {
             collaborators: 4
@@ -264,7 +278,7 @@ describe('FeaturesUpdater', function() {
       ).to.deep.equal({
         compileTimeout: 20
       })
-      expect(
+      return expect(
         this.FeaturesUpdater._mergeFeatures(
           {
             compileTimeout: 10
@@ -315,7 +329,7 @@ describe('FeaturesUpdater', function() {
       ).to.deep.equal({
         github: true
       })
-      expect(
+      return expect(
         this.FeaturesUpdater._mergeFeatures(
           {
             github: false
@@ -343,45 +357,45 @@ describe('FeaturesUpdater', function() {
 
       this.UserGetter.getUser = sinon.stub().callsArgWith(2, null, this.user)
       this.FeaturesUpdater.refreshFeatures = sinon.stub().yields(null)
-      this.call = cb => {
-        this.FeaturesUpdater.doSyncFromV1(this.v1UserId, cb)
-      }
+      return (this.call = cb => {
+        return this.FeaturesUpdater.doSyncFromV1(this.v1UserId, cb)
+      })
     })
 
     describe('when all goes well', function() {
       it('should call getUser', function(done) {
-        this.call(() => {
+        return this.call(() => {
           expect(this.UserGetter.getUser.callCount).to.equal(1)
           expect(
             this.UserGetter.getUser.calledWith({ 'overleaf.id': this.v1UserId })
           ).to.equal(true)
-          done()
+          return done()
         })
       })
 
       it('should call refreshFeatures', function(done) {
-        this.call(() => {
+        return this.call(() => {
           expect(this.FeaturesUpdater.refreshFeatures.callCount).to.equal(1)
           expect(
             this.FeaturesUpdater.refreshFeatures.calledWith(this.user_id)
           ).to.equal(true)
-          done()
+          return done()
         })
       })
 
       it('should not produce an error', function(done) {
-        this.call(err => {
+        return this.call(err => {
           expect(err).to.not.exist
-          done()
+          return done()
         })
       })
     })
 
     describe('when getUser produces an error', function() {
       beforeEach(function() {
-        this.UserGetter.getUser = sinon
+        return (this.UserGetter.getUser = sinon
           .stub()
-          .callsArgWith(2, new Error('woops'))
+          .callsArgWith(2, new Error('woops')))
       })
 
       it('should not call refreshFeatures', function() {
@@ -389,29 +403,31 @@ describe('FeaturesUpdater', function() {
       })
 
       it('should produce an error', function(done) {
-        this.call(err => {
+        return this.call(err => {
           expect(err).to.exist
-          done()
+          return done()
         })
       })
     })
 
     describe('when getUser does not find a user', function() {
       beforeEach(function() {
-        this.UserGetter.getUser = sinon.stub().callsArgWith(2, null, null)
+        return (this.UserGetter.getUser = sinon
+          .stub()
+          .callsArgWith(2, null, null))
       })
 
       it('should not call refreshFeatures', function(done) {
-        this.call(() => {
+        return this.call(() => {
           expect(this.FeaturesUpdater.refreshFeatures.callCount).to.equal(0)
-          done()
+          return done()
         })
       })
 
       it('should not produce an error', function(done) {
-        this.call(err => {
+        return this.call(err => {
           expect(err).to.not.exist
-          done()
+          return done()
         })
       })
     })

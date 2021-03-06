@@ -4,7 +4,6 @@ const tk = require('timekeeper')
 const Errors = require('../../../../app/src/Features/Errors/Errors')
 const { ObjectId } = require('mongodb')
 const SandboxedModule = require('sandboxed-module')
-const { DeletedFile } = require('../helpers/models/DeletedFile')
 const { Project } = require('../helpers/models/Project')
 
 const MODULE_PATH =
@@ -77,7 +76,6 @@ describe('ProjectEntityMongoUpdateHandler', function() {
     }
 
     this.FolderModel = sinon.stub()
-    this.DeletedFileMock = sinon.mock(DeletedFile)
     this.ProjectMock = sinon.mock(Project)
     this.ProjectEntityHandler = {
       promises: {
@@ -194,7 +192,6 @@ describe('ProjectEntityMongoUpdateHandler', function() {
         '../Cooldown/CooldownManager': this.CooldownManager,
         '../../models/Folder': { Folder: this.FolderModel },
         '../../infrastructure/LockManager': this.LockManager,
-        '../../models/DeletedFile': { DeletedFile },
         '../../models/Project': { Project },
         './ProjectEntityHandler': this.ProjectEntityHandler,
         './ProjectLocator': this.ProjectLocator,
@@ -205,7 +202,6 @@ describe('ProjectEntityMongoUpdateHandler', function() {
   })
 
   afterEach(function() {
-    this.DeletedFileMock.restore()
     this.ProjectMock.restore()
   })
 
@@ -359,15 +355,22 @@ describe('ProjectEntityMongoUpdateHandler', function() {
         hash: 'some-hash'
       }
       // Add a deleted file record
-      this.DeletedFileMock.expects('create')
-        .withArgs({
-          projectId: this.project._id,
-          _id: this.file._id,
-          name: this.file.name,
-          linkedFileData: this.file.linkedFileData,
-          hash: this.file.hash,
-          deletedAt: sinon.match.date
-        })
+      this.ProjectMock.expects('updateOne')
+        .withArgs(
+          { _id: this.project._id },
+          {
+            $push: {
+              deletedFiles: {
+                _id: this.file._id,
+                name: this.file.name,
+                linkedFileData: this.file.linkedFileData,
+                hash: this.file.hash,
+                deletedAt: sinon.match.date
+              }
+            }
+          }
+        )
+        .chain('exec')
         .resolves()
       // Update the file in place
       this.ProjectMock.expects('findOneAndUpdate')
@@ -396,7 +399,6 @@ describe('ProjectEntityMongoUpdateHandler', function() {
     })
 
     it('updates the database', function() {
-      this.DeletedFileMock.verify()
       this.ProjectMock.verify()
     })
   })
@@ -1006,15 +1008,22 @@ describe('ProjectEntityMongoUpdateHandler', function() {
 
   describe('_insertDeletedFileReference', function() {
     beforeEach(async function() {
-      this.DeletedFileMock.expects('create')
-        .withArgs({
-          projectId: this.project._id,
-          _id: this.file._id,
-          name: this.file.name,
-          linkedFileData: this.file.linkedFileData,
-          hash: this.file.hash,
-          deletedAt: sinon.match.date
-        })
+      this.ProjectMock.expects('updateOne')
+        .withArgs(
+          { _id: this.project._id },
+          {
+            $push: {
+              deletedFiles: {
+                _id: this.file._id,
+                name: this.file.name,
+                linkedFileData: this.file.linkedFileData,
+                hash: this.file.hash,
+                deletedAt: sinon.match.date
+              }
+            }
+          }
+        )
+        .chain('exec')
         .resolves()
       await this.subject.promises._insertDeletedFileReference(
         this.project._id,
@@ -1023,7 +1032,7 @@ describe('ProjectEntityMongoUpdateHandler', function() {
     })
 
     it('should update the database', function() {
-      this.DeletedFileMock.verify()
+      this.ProjectMock.verify()
     })
   })
 

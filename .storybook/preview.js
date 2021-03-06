@@ -1,6 +1,8 @@
 import React from 'react'
 
-import './preview.css'
+const DefaultTheme = React.lazy(() => import('./default-theme'))
+const LightTheme = React.lazy(() => import('./light-theme'))
+const IEEETheme = React.lazy(() => import('./ieee-theme'))
 
 // Storybook does not (currently) support async loading of "stories". Therefore
 // the strategy in frontend/js/i18n.js does not work (because we cannot wait on
@@ -33,54 +35,33 @@ export const parameters = {
   // Automatically mark prop-types like onClick, onToggle, etc as Storybook
   // "actions", so that they are logged in the Actions pane at the bottom of the
   // viewer
-  actions: { argTypesRegex: '^on.*' },
-  docs: {
-    // render stories in iframes, to isolate modals
-    inlineStories: false
-  }
+  actions: { argTypesRegex: '^on.*' }
 }
 
 export const globalTypes = {
   theme: {
     name: 'Theme',
     description: 'Editor theme',
-    defaultValue: 'default-',
+    defaultValue: 'default',
     toolbar: {
       icon: 'circlehollow',
-      items: [
-        { value: 'default-', title: 'Default' },
-        { value: 'light-', title: 'Light' },
-        { value: 'ieee-', title: 'IEEE' }
-      ]
+      items: ['default', 'light', 'IEEE']
     }
   }
 }
 
-export const loaders = [
-  async ({ globals }) => {
-    const { theme } = globals
-
-    return {
-      // NOTE: this uses `${theme}style.less` rather than `${theme}.less`
-      // so that webpack only bundles files ending with "style.less"
-      activeStyle: await import(
-        `../frontend/stylesheets/${theme === 'default-' ? '' : theme}style.less`
-      )
-    }
-  }
-]
-
 const withTheme = (Story, context) => {
-  const { activeStyle } = context.loaded
-
   return (
     <>
-      {activeStyle && <style>{activeStyle.default}</style>}
+      <React.Suspense fallback={<></>}>
+        {context.globals.theme === 'default' && <DefaultTheme />}
+        {context.globals.theme === 'light' && <LightTheme />}
+        {context.globals.theme === 'IEEE' && <IEEETheme />}
+      </React.Suspense>
       <Story {...context} />
     </>
   )
 }
-
 export const decorators = [withTheme]
 
 window.ExposedSettings = {}

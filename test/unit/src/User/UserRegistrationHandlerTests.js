@@ -250,7 +250,7 @@ describe('UserRegistrationHandler', function() {
 
   describe('registerNewUserAndSendActivationEmail', function() {
     beforeEach(function() {
-      this.email = 'Email@example.com'
+      this.email = 'email@example.com'
       this.crypto.randomBytes = sinon.stub().returns({
         toString: () => {
           return (this.password = 'mock-password')
@@ -266,7 +266,6 @@ describe('UserRegistrationHandler', function() {
 
     describe('with a new user', function() {
       beforeEach(function() {
-        this.user.email = this.email.toLowerCase()
         this.handler.registerNewUser.callsArgWith(1, null, this.user)
         return this.handler.registerNewUserAndSendActivationEmail(
           this.email,
@@ -284,10 +283,7 @@ describe('UserRegistrationHandler', function() {
       })
 
       it('should generate a new password reset token', function() {
-        const data = {
-          user_id: this.user._id.toString(),
-          email: this.user.email
-        }
+        const data = { user_id: this.user._id.toString(), email: this.email }
         return this.OneTimeTokenHandler.getNewToken
           .calledWith('password', data, { expiresIn: 7 * 24 * 60 * 60 })
           .should.equal(true)

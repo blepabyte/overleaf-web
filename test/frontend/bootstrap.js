@@ -8,7 +8,6 @@ require('jsdom-global/register')
 // has a nicer failure messages
 const chai = require('chai')
 chai.use(require('sinon-chai'))
-chai.use(require('chai-as-promised'))
 
 window.i18n = { currentLangCode: 'en' }
 require('../../frontend/js/i18n')
@@ -26,19 +25,14 @@ moment.updateLocale('en', {
 })
 
 let inMemoryLocalStorage = {}
-Object.defineProperty(global, 'localStorage', {
-  value: {
-    // localStorage returns `null` when the item does not exist
-    getItem: key =>
-      inMemoryLocalStorage[key] !== undefined
-        ? inMemoryLocalStorage[key]
-        : null,
-    setItem: (key, value) => (inMemoryLocalStorage[key] = value),
-    clear: () => (inMemoryLocalStorage = {}),
-    removeItem: key => delete inMemoryLocalStorage[key]
-  },
-  writable: true
-})
+global.localStorage = {
+  // localStorage returns `null` when the item does not exist
+  getItem: key =>
+    inMemoryLocalStorage[key] !== undefined ? inMemoryLocalStorage[key] : null,
+  setItem: (key, value) => (inMemoryLocalStorage[key] = value),
+  clear: () => (inMemoryLocalStorage = {}),
+  removeItem: key => delete inMemoryLocalStorage[key]
+}
 
 // node-fetch doesn't accept relative URL's: https://github.com/node-fetch/node-fetch/blob/master/docs/v2-LIMITS.md#known-differences
 const fetch = require('node-fetch')

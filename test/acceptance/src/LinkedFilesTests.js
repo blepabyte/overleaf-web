@@ -5,6 +5,8 @@ const { promisify } = require('util')
 
 const Settings = require('settings-sharelatex')
 const User = require('./helpers/User').promises
+require('./helpers/MockFileStoreApi')
+require('./helpers/MockClsiApi')
 
 const express = require('express')
 const LinkedUrlProxy = express()

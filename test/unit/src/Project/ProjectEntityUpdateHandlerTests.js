@@ -71,7 +71,6 @@ describe('ProjectEntityUpdateHandler', function() {
 
     this.DocstoreManager = {
       getDoc: sinon.stub(),
-      isDocDeleted: sinon.stub(),
       updateDoc: sinon.stub(),
       deleteDoc: sinon.stub()
     }
@@ -83,7 +82,6 @@ describe('ProjectEntityUpdateHandler', function() {
       deleteDoc: sinon.stub().yields()
     }
     this.logger = {
-      info: sinon.stub(),
       log: sinon.stub(),
       warn: sinon.stub(),
       error: sinon.stub(),
@@ -190,8 +188,7 @@ describe('ProjectEntityUpdateHandler', function() {
       this.ranges = { mock: 'ranges' }
       this.lastUpdatedAt = new Date().getTime()
       this.lastUpdatedBy = 'fake-last-updater-id'
-      this.DocstoreManager.isDocDeleted.yields(null, false)
-      this.ProjectGetter.getProject.yields(null, this.project)
+      this.ProjectGetter.getProjectWithoutDocLines.yields(null, this.project)
       this.ProjectLocator.findElement.yields(null, this.doc, {
         fileSystem: this.path
       })
@@ -213,12 +210,9 @@ describe('ProjectEntityUpdateHandler', function() {
         )
       })
 
-      it('should get the project with very few fields', function() {
-        this.ProjectGetter.getProject
-          .calledWith(projectId, {
-            name: true,
-            rootFolder: true
-          })
+      it('should get the project without doc lines', function() {
+        this.ProjectGetter.getProjectWithoutDocLines
+          .calledWith(projectId)
           .should.equal(true)
       })
 
@@ -300,56 +294,9 @@ describe('ProjectEntityUpdateHandler', function() {
 
     describe('when the doc has been deleted', function() {
       beforeEach(function() {
-        this.ProjectGetter.getProject.yields(null, this.project)
+        this.project.deletedDocs = [{ _id: docId }]
+        this.ProjectGetter.getProjectWithoutDocLines.yields(null, this.project)
         this.ProjectLocator.findElement.yields(new Errors.NotFoundError())
-        this.DocstoreManager.isDocDeleted.yields(null, true)
-        this.DocstoreManager.updateDoc.yields()
-        this.ProjectEntityUpdateHandler.updateDocLines(
-          projectId,
-          docId,
-          this.docLines,
-          this.version,
-          this.ranges,
-          this.lastUpdatedAt,
-          this.lastUpdatedBy,
-          this.callback
-        )
-      })
-
-      it('should update the doc in the docstore', function() {
-        this.DocstoreManager.updateDoc
-          .calledWith(
-            projectId,
-            docId,
-            this.docLines,
-            this.version,
-            this.ranges
-          )
-          .should.equal(true)
-      })
-
-      it('should not mark the project as updated', function() {
-        this.ProjectUpdater.markAsUpdated.called.should.equal(false)
-      })
-
-      it('should not send the doc the to the TPDS', function() {
-        this.TpdsUpdateSender.addDoc.called.should.equal(false)
-      })
-
-      it('should call the callback', function() {
-        this.callback.called.should.equal(true)
-      })
-    })
-
-    describe('when projects and docs collection are de-synced', function() {
-      beforeEach(function() {
-        this.ProjectGetter.getProject.yields(null, this.project)
-
-        // The doc is not in the file-tree, but also not marked as deleted.
-        // This should not happen, but web should handle it.
-        this.ProjectLocator.findElement.yields(new Errors.NotFoundError())
-        this.DocstoreManager.isDocDeleted.yields(null, false)
-
         this.DocstoreManager.updateDoc.yields()
         this.ProjectEntityUpdateHandler.updateDocLines(
           projectId,
@@ -390,9 +337,7 @@ describe('ProjectEntityUpdateHandler', function() {
 
     describe('when the doc is not related to the project', function() {
       beforeEach(function() {
-        this.ProjectGetter.getProject.yields(null, this.project)
-        this.ProjectLocator.findElement.yields(new Errors.NotFoundError())
-        this.DocstoreManager.isDocDeleted.yields(new Errors.NotFoundError())
+        this.ProjectLocator.findElement.yields()
         this.ProjectEntityUpdateHandler.updateDocLines(
           projectId,
           docId,
@@ -409,20 +354,12 @@ describe('ProjectEntityUpdateHandler', function() {
         this.callback
           .calledWith(sinon.match.instanceOf(Errors.NotFoundError))
           .should.equal(true)
-      })
-
-      it('should not update the doc', function() {
-        this.DocstoreManager.updateDoc.called.should.equal(false)
-      })
-
-      it('should not send the doc the to the TPDS', function() {
-        this.TpdsUpdateSender.addDoc.called.should.equal(false)
       })
     })
 
     describe('when the project is not found', function() {
       beforeEach(function() {
-        this.ProjectGetter.getProject.yields(new Errors.NotFoundError())
+        this.ProjectGetter.getProjectWithoutDocLines.yields()
         this.ProjectEntityUpdateHandler.updateDocLines(
           projectId,
           docId,
@@ -439,14 +376,6 @@ describe('ProjectEntityUpdateHandler', function() {
         this.callback
           .calledWith(sinon.match.instanceOf(Errors.NotFoundError))
           .should.equal(true)
-      })
-
-      it('should not update the doc', function() {
-        this.DocstoreManager.updateDoc.called.should.equal(false)
-      })
-
-      it('should not send the doc the to the TPDS', function() {
-        this.TpdsUpdateSender.addDoc.called.should.equal(false)
       })
     })
   })
@@ -2006,7 +1935,7 @@ describe('ProjectEntityUpdateHandler', function() {
         )
       })
 
-      it('should insert the file into the deletedFiles collection', function() {
+      it('should insert the file into the deletedFiles array', function() {
         this.ProjectEntityMongoUpdateHandler._insertDeletedFileReference
           .calledWith(this.project._id, this.entity)
           .should.equal(true)

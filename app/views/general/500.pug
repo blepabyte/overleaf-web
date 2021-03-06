@@ -4,10 +4,10 @@ html.full-height(itemscope, itemtype='http://schema.org/Product')
 		title Something went wrong
 		link(rel="icon", href="/favicon.ico")
 		if buildCssPath
-			link(rel="stylesheet", href=buildCssPath())
+			link(rel="stylesheet", href=buildCssPath(null, { hashedPath: true }))
 
 	body.full-height
-		main.content.content-alt.full-height
+		.content.content-alt.full-height
 			.container.full-height
 				.error-container.full-height
 					.error-details

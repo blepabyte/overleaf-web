@@ -413,30 +413,3 @@ script(type='text/ng-template', id='clearCacheModalTemplate')
 
 script(type="text/javascript").
 	window.showNewLogsUI = #{showNewLogsUI || false}
-
-script.
-	spinTarget = document.querySelector(".btn-recompile .fa-refresh")
-
-	isSpinning = () => {
-		return spinTarget.classList.contains("fa-spin")
-	}
-
-	spinLastState = isSpinning()
-
-	spinObserver = new MutationObserver(muts => {
-		muts.forEach(mut => {
-			if (mut.attributeName === 'class') {
-				let spinNowState = isSpinning()
-				if (spinLastState !== spinNowState && !spinNowState) {
-					// A change occurred, spinning -> not spinning, which should indicate the compile finished
-					window.fuckingForcePDFReload()
-				}
-				spinLastState = spinNowState
-			}
-		})
-	})
-
-	spinObserver.observe(spinTarget, {
-		attributes: true,
-		attributeFilter: ['class']
-	})

@@ -1,10 +1,12 @@
 import React from 'react'
 import fetchMock from 'fetch-mock'
-import { v4 as uuid } from 'uuid'
-
 import { ContextRoot } from '../js/shared/context/root-context'
 import ChatPane from '../js/features/chat/components/chat-pane'
-import { stubMathJax } from '../../test/frontend/features/chat/components/stubs'
+import {
+  stubChatStore,
+  stubUIConfig,
+  stubMathJax
+} from '../../test/frontend/features/chat/components/stubs'
 import { setupContext } from './fixtures/context'
 
 const ONE_MINUTE = 60 * 1000
@@ -31,7 +33,6 @@ function generateMessages(count) {
     timestamp -= (4.3 + Math.random()) * ONE_MINUTE
 
     messages.push({
-      id: uuid(),
       content: `message #${i}`,
       user: author,
       timestamp
@@ -40,10 +41,12 @@ function generateMessages(count) {
   return messages
 }
 
+stubUIConfig()
 stubMathJax()
+stubChatStore({ user })
 setupContext()
 
-export const Conversation = args => <ChatPane {...args} />
+export const Conversation = args => <ChatPane {...args} chatIsOpen />
 Conversation.parameters = {
   setupMocks: () => {
     fetchMock.restore()
@@ -52,7 +55,7 @@ Conversation.parameters = {
   }
 }
 
-export const NoMessages = args => <ChatPane {...args} />
+export const NoMessages = args => <ChatPane {...args} chatIsOpen />
 NoMessages.parameters = {
   setupMocks: () => {
     fetchMock.restore()
@@ -60,7 +63,7 @@ NoMessages.parameters = {
   }
 }
 
-export const Loading = args => <ChatPane {...args} />
+export const Loading = args => <ChatPane {...args} chatIsOpen />
 Loading.parameters = {
   setupMocks: () => {
     fetchMock.restore()
@@ -87,7 +90,7 @@ export default {
     Story => (
       <>
         <style>{'html, body, .chat { height: 100%; width: 100%; }'}</style>
-        <ContextRoot ide={window._ide} settings={{}}>
+        <ContextRoot>
           <Story />
         </ContextRoot>
       </>

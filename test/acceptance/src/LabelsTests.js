@@ -16,14 +16,8 @@ const { expect } = require('chai')
 const { ObjectId } = require('mongodb')
 const request = require('./helpers/request')
 
+const MockProjectHistoryApi = require('./helpers/MockProjectHistoryApi')
 const User = require('./helpers/User')
-const MockProjectHistoryApiClass = require('./mocks/MockProjectHistoryApi')
-
-let MockProjectHistoryApi
-
-before(function() {
-  MockProjectHistoryApi = MockProjectHistoryApiClass.instance()
-})
 
 describe('Labels', function() {
   beforeEach(function(done) {
@@ -44,6 +38,10 @@ describe('Labels', function() {
         }
       )
     })
+  })
+
+  afterEach(function() {
+    return MockProjectHistoryApi.reset()
   })
 
   it('getting labels', function(done) {

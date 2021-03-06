@@ -98,7 +98,6 @@ describe('ProjectController', function() {
       ipMatcherAffiliation: sinon.stub().returns({ create: sinon.stub() })
     }
     this.UserGetter = {
-      getUserFullEmails: sinon.stub().yields(null, []),
       getUser: sinon
         .stub()
         .callsArgWith(2, null, { lastLoginIp: '192.170.18.2' })
@@ -114,14 +113,23 @@ describe('ProjectController', function() {
     this.TpdsProjectFlusher = {
       flushProjectToTpdsIfNeeded: sinon.stub().yields()
     }
+    this.getUserAffiliations = sinon.stub().callsArgWith(1, null, [
+      {
+        email: 'test@overleaf.com',
+        institution: {
+          id: 1,
+          confirmed: true,
+          name: 'Overleaf',
+          ssoBeta: false,
+          ssoEnabled: true
+        }
+      }
+    ])
     this.Metrics = {
       Timer: class {
         done() {}
       },
       inc: sinon.stub()
-    }
-    this.NewLogsUIHelper = {
-      shouldUserSeeNewLogsUI: sinon.stub().returns(false)
     }
 
     this.ProjectController = SandboxedModule.require(MODULE_PATH, {
@@ -164,13 +172,12 @@ describe('ProjectController', function() {
         '../User/UserGetter': this.UserGetter,
         '../BrandVariations/BrandVariationsHandler': this
           .BrandVariationsHandler,
+        '../Institutions/InstitutionsAPI': {
+          getUserAffiliations: this.getUserAffiliations
+        },
         '../ThirdPartyDataStore/TpdsProjectFlusher': this.TpdsProjectFlusher,
         '../../models/Project': {},
-        '../Analytics/AnalyticsManager': { recordEvent: () => {} },
-        '../../infrastructure/Modules': {
-          hooks: { fire: sinon.stub().yields(null, []) }
-        },
-        '../Helpers/NewLogsUI': this.NewLogsUIHelper
+        '../Analytics/AnalyticsManager': { recordEvent: () => {} }
       }
     })
 
@@ -494,6 +501,37 @@ describe('ProjectController', function() {
       this.ProjectController.projectListPage(this.req, this.res)
     })
 
+    describe('when there is a v1 connection error', function() {
+      beforeEach(function() {
+        this.Features.hasFeature = sinon
+          .stub()
+          .withArgs('overleaf-integration')
+          .returns(true)
+        this.connectionWarning =
+          'Error accessing Overleaf V1. Some of your projects or features may be missing.'
+      })
+
+      it('should show a warning when there is an error getting subscriptions from v1', function(done) {
+        this.LimitationsManager.hasPaidSubscription.yields(
+          new Errors.V1ConnectionError('error')
+        )
+        this.res.render = (pageName, opts) => {
+          expect(opts.warnings).to.contain(this.connectionWarning)
+          done()
+        }
+        this.ProjectController.projectListPage(this.req, this.res)
+      })
+
+      it('should show a warning when there is an error getting affiliations from v1', function(done) {
+        this.getUserAffiliations.yields(new Errors.V1ConnectionError('error'))
+        this.res.render = (pageName, opts) => {
+          expect(opts.warnings).to.contain(this.connectionWarning)
+          done()
+        }
+        this.ProjectController.projectListPage(this.req, this.res)
+      })
+    })
+
     describe('front widget', function(done) {
       beforeEach(function() {
         this.settings.overleaf = {
@@ -544,20 +582,6 @@ describe('ProjectController', function() {
         done()
       })
       it('should show institution SSO available notification for confirmed domains', function() {
-        this.UserGetter.getUserFullEmails.yields(null, [
-          {
-            email: 'test@overleaf.com',
-            affiliation: {
-              institution: {
-                id: 1,
-                confirmed: true,
-                name: 'Overleaf',
-                ssoBeta: false,
-                ssoEnabled: true
-              }
-            }
-          }
-        ])
         this.res.render = (pageName, opts) => {
           expect(opts.notificationsInstitution).to.deep.include({
             email: this.institutionEmail,
@@ -606,7 +630,6 @@ describe('ProjectController', function() {
         }
         this.ProjectController.projectListPage(this.req, this.res)
       })
-
       it('should show a notification when intent was to register via SSO but account existed', function() {
         this.res.render = (pageName, opts) => {
           expect(opts.notificationsInstitution).to.deep.include({
@@ -627,7 +650,6 @@ describe('ProjectController', function() {
         }
         this.ProjectController.projectListPage(this.req, this.res)
       })
-
       it('should not show a register notification if the flow was abandoned', function() {
         // could initially start to register with an SSO email and then
         // abandon flow and login with an existing non-institution SSO email
@@ -645,37 +667,46 @@ describe('ProjectController', function() {
         }
         this.ProjectController.projectListPage(this.req, this.res)
       })
-
-      it('should show error notification', function() {
+      it('should show institution account linked to another account', function() {
         this.res.render = (pageName, opts) => {
-          expect(opts.notificationsInstitution.length).to.equal(1)
-          expect(opts.notificationsInstitution[0].templateKey).to.equal(
-            'notification_institution_sso_error'
-          )
-          expect(opts.notificationsInstitution[0].error).to.be.instanceof(
-            Errors.SAMLAlreadyLinkedError
-          )
+          expect(opts.notificationsInstitution).to.deep.include({
+            templateKey: 'notification_institution_sso_linked_by_another'
+          })
+          // Also check other notifications are not shown
+          expect(opts.notificationsInstitution).to.not.deep.include({
+            email: this.institutionEmail,
+            templateKey: 'notification_institution_sso_already_registered'
+          })
+          expect(opts.notificationsInstitution).to.not.deep.include({
+            institutionEmail: this.institutionEmail,
+            requestedEmail: 'requested@overleaf.com',
+            templateKey: 'notification_institution_sso_non_canonical'
+          })
+          expect(opts.notificationsInstitution).to.not.deep.include({
+            email: this.institutionEmail,
+            institutionName: this.institutionName,
+            templateKey: 'notification_institution_sso_linked'
+          })
         }
         this.req.session.saml = {
+          emailNonCanonical: this.institutionEmail,
           institutionEmail: this.institutionEmail,
-          error: new Errors.SAMLAlreadyLinkedError()
+          requestedEmail: 'requested@overleaf.com',
+          linkedToAnother: true
         }
         this.ProjectController.projectListPage(this.req, this.res)
       })
-
       describe('for an unconfirmed domain for an SSO institution', function() {
         beforeEach(function(done) {
-          this.UserGetter.getUserFullEmails.yields(null, [
+          this.getUserAffiliations.yields(null, [
             {
               email: 'test@overleaf-uncofirmed.com',
-              affiliation: {
-                institution: {
-                  id: 1,
-                  confirmed: false,
-                  name: 'Overleaf',
-                  ssoBeta: false,
-                  ssoEnabled: true
-                }
+              institution: {
+                id: 1,
+                confirmed: false,
+                name: 'Overleaf',
+                ssoBeta: false,
+                ssoEnabled: true
               }
             }
           ])
@@ -712,17 +743,15 @@ describe('ProjectController', function() {
       })
       describe('Institution with SSO beta testable', function() {
         beforeEach(function(done) {
-          this.UserGetter.getUserFullEmails.yields(null, [
+          this.getUserAffiliations.yields(null, [
             {
               email: 'beta@beta.com',
-              affiliation: {
-                institution: {
-                  id: 2,
-                  confirmed: true,
-                  name: 'Beta University',
-                  ssoBeta: true,
-                  ssoEnabled: false
-                }
+              institution: {
+                id: 2,
+                confirmed: true,
+                name: 'Beta University',
+                ssoBeta: true,
+                ssoEnabled: false
               }
             }
           ])

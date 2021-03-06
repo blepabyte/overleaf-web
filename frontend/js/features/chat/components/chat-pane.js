@@ -5,24 +5,20 @@ import MessageInput from './message-input'
 import InfiniteScroll from './infinite-scroll'
 import Icon from '../../../shared/components/icon'
 import { useTranslation } from 'react-i18next'
-import { useLayoutContext } from '../../../shared/context/layout-context'
+import { useChatStore } from '../store/chat-store-effect'
 import withErrorBoundary from '../../../infrastructure/error-boundary'
-import { useChatContext } from '../context/chat-context'
 
-function ChatPane() {
+function ChatPane({ resetUnreadMessages, chatIsOpen }) {
   const { t } = useTranslation()
 
-  const { chatIsOpen } = useLayoutContext({ chatIsOpen: PropTypes.bool })
-
   const {
-    userId,
     atEnd,
     loading,
     loadMoreMessages,
     messages,
     sendMessage,
-    resetUnreadMessageCount
-  } = useChatContext()
+    userId
+  } = useChatStore()
 
   const [initialMessagesLoaded, setInitialMessagesLoaded] = useState(false)
 
@@ -56,12 +52,12 @@ function ChatPane() {
           <MessageList
             messages={messages}
             userId={userId}
-            resetUnreadMessages={resetUnreadMessageCount}
+            resetUnreadMessages={resetUnreadMessages}
           />
         </div>
       </InfiniteScroll>
       <MessageInput
-        resetUnreadMessages={resetUnreadMessageCount}
+        resetUnreadMessages={resetUnreadMessages}
         sendMessage={sendMessage}
       />
     </aside>
@@ -90,6 +86,11 @@ function Placeholder() {
       </div>
     </>
   )
+}
+
+ChatPane.propTypes = {
+  resetUnreadMessages: PropTypes.func.isRequired,
+  chatIsOpen: PropTypes.bool
 }
 
 export default withErrorBoundary(ChatPane)

@@ -7,12 +7,6 @@
  */
 export default [
   {
-    caption: '\\prob{}',
-    snippet: '\\prob{\\mathbb P \\left( $1 \\right)}',
-    meta: 'cmd',
-    score: 8.1
-  },
-  {
     caption: '\\begin{}',
     snippet: '\\begin{$1}',
     meta: 'env',

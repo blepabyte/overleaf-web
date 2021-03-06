@@ -28,7 +28,6 @@ async function setupDb() {
   const internalDb = (await clientPromise).db()
 
   db.contacts = internalDb.collection('contacts')
-  db.deletedFiles = internalDb.collection('deletedFiles')
   db.deletedProjects = internalDb.collection('deletedProjects')
   db.deletedSubscriptions = internalDb.collection('deletedSubscriptions')
   db.deletedUsers = internalDb.collection('deletedUsers')

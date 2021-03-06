@@ -89,9 +89,7 @@ async function expireDeletedProjectsAfterDuration() {
       project: { $ne: null }
     },
     { 'deleterData.deletedProjectId': 1 }
-  )
-    .limit(PROJECT_EXPIRATION_BATCH_SIZE)
-    .read('secondary')
+  ).limit(PROJECT_EXPIRATION_BATCH_SIZE)
   const projectIds = _.shuffle(
     deletedProjects.map(
       deletedProject => deletedProject.deleterData.deletedProjectId

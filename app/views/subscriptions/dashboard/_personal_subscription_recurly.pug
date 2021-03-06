@@ -8,11 +8,8 @@ div(ng-controller="RecurlySubscriptionController")
 		case personalSubscription.recurly.state
 			when "active"
 				p !{translate("currently_subscribed_to_plan", {planName: personalSubscription.plan.name}, ['strong'])}
-					-if (personalSubscription.recurly.additionalLicenses > 0)
-						|
-						| !{translate("additional_licenses", {additionalLicenses: personalSubscription.recurly.additionalLicenses, totalLicenses: personalSubscription.recurly.totalLicenses}, ['strong', 'strong'])}
-					| &nbsp;
-					a(href, ng-click="switchToChangePlanView()", ng-if="showChangePlanButton") !{translate("change_plan")}.
+					|
+					a(href, ng-click="switchToChangePlanView()", ng-if="showChangePlanButton") &nbsp;!{translate("change_plan")}.
 				-if (personalSubscription.recurly.trialEndsAtFormatted && personalSubscription.recurly.trial_ends_at > Date.now())
 					p You're on a free trial which ends on <strong ng-non-bindable>#{personalSubscription.recurly.trialEndsAtFormatted}</strong>
 				p !{translate("next_payment_of_x_collectected_on_y", {paymentAmmount: personalSubscription.recurly.price, collectionDate: personalSubscription.recurly.nextPaymentDueAt}, ['strong', 'strong'])}
@@ -98,3 +95,4 @@ script(type='text/ng-template', id='confirmChangePlanModalTemplate')
 		)
 			span(ng-hide="inflight") #{translate("change_plan")}
 			span(ng-show="inflight") #{translate("processing")}…
+

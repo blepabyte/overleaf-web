@@ -4,16 +4,13 @@ block vars
 	- metadata = { viewport: true }
 
 block content
-	main.content.content-alt
+	.content.content-alt
 		.container
 			.row
 				.col-md-6.col-md-offset-3.col-lg-4.col-lg-offset-4
 					.card
 						.page-header
 							h1 #{translate("log_in")}
-
-							p isRedirected: #{isRedirected}
-
 						form(async-form="login", name="loginForm", action='/login', method="POST", ng-cloak)
 							input(name='_csrf', type='hidden', value=csrfToken)
 							form-messages(for="loginForm")
@@ -48,35 +45,3 @@ block content
 									span(ng-show="!loginForm.inflight") #{translate("login")}
 									span(ng-show="loginForm.inflight") #{translate("logging_in")}…
 								a.pull-right(href='/user/password/reset') #{translate("forgot_your_password")}?
-	
-	script.
-		//- Wrong syntax highlighting should have told me something was off...
-		console.log("Testing if this gets included in the Docker build...")
-
-		//- [within Docker container](/var/www/sharelatex/web/app/views/user)
-		const args = new URLSearchParams(window.location.search)
-
-		let redirectStatus = !{isRedirected}
-
-		//- Ideally, on redirect we should create a new unique user
-
-		let DEFAULT_USER = "default@us.er"
-		let DEFAULT_PASSWORD = "password"
-
-		let resolved_user, resolved_password
-		if (args.get("u") && args.get("p")) {
-			resolved_user = args.get("u")
-			resolved_password = args.get("p")
-		} else {
-			resolved_user = DEFAULT_USER
-			resolved_password = DEFAULT_PASSWORD
-		}
-
-		setTimeout(() => {
-			document.querySelector("input[name=email]").value = resolved_user
-			document.querySelector("input[name=password]").value = resolved_password
-
-			if (!args.get("noauto")) {
-				document.querySelector(".actions button[type=submit]").click()
-			}
-		}, 500)

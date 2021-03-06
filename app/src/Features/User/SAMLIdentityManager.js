@@ -1,4 +1,3 @@
-const { ObjectId } = require('mongodb')
 const EmailHandler = require('../Email/EmailHandler')
 const Errors = require('../Errors/Errors')
 const InstitutionsAPI = require('../Institutions/InstitutionsAPI')
@@ -33,61 +32,6 @@ async function _addAuditLogEntry(
   )
 }
 
-async function _ensureCanAddIdentifier(userId, institutionEmail, providerId) {
-  const userWithProvider = await UserGetter.promises.getUser(
-    { _id: ObjectId(userId), 'samlIdentifiers.providerId': providerId },
-    { _id: 1 }
-  )
-
-  if (userWithProvider) {
-    throw new Errors.SAMLAlreadyLinkedError()
-  }
-
-  const userWithEmail = await UserGetter.promises.getUserByAnyEmail(
-    institutionEmail
-  )
-
-  if (!userWithEmail) {
-    // email doesn't exist; all good
-    return
-  }
-
-  const emailBelongToUser = userWithEmail._id.toString() === userId.toString()
-  const existingEmailData = userWithEmail.emails.find(
-    emailData => emailData.email === institutionEmail
-  )
-
-  if (!emailBelongToUser && existingEmailData.samlProviderId) {
-    // email exists and institution link.
-    // Return back to requesting page with error
-    throw new Errors.SAMLIdentityExistsError()
-  }
-
-  if (!emailBelongToUser) {
-    // email exists but not linked, so redirect to linking page
-    // which will tell this user to log out to link
-    throw new Errors.EmailExistsError()
-  }
-
-  // email belongs to user. Make sure it's already affiliated with the provider
-  const fullEmails = await UserGetter.promises.getUserFullEmails(
-    userWithEmail._id
-  )
-  const existingFullEmailData = fullEmails.find(
-    emailData => emailData.email === institutionEmail
-  )
-
-  if (!existingFullEmailData.affiliation) {
-    throw new Errors.SAMLEmailNotAffiliatedError()
-  }
-
-  if (
-    existingFullEmailData.affiliation.institution.id.toString() !== providerId
-  ) {
-    throw new Errors.SAMLEmailAffiliatedWithAnotherInstitutionError()
-  }
-}
-
 async function _addIdentifier(
   userId,
   externalUserId,
@@ -97,9 +41,25 @@ async function _addIdentifier(
   providerName,
   auditLog
 ) {
-  providerId = providerId.toString()
+  // first check if institutionEmail linked to another account
+  // before adding the identifier for the email
+  const user = await UserGetter.promises.getUserByAnyEmail(institutionEmail)
+  if (user && user._id.toString() !== userId.toString()) {
+    const existingEmailData = user.emails.find(
+      emailData => emailData.email === institutionEmail
+    )
+    if (existingEmailData && existingEmailData.samlProviderId) {
+      // email exists and institution link.
+      // Return back to requesting page with error
+      throw new Errors.SAMLIdentityExistsError()
+    } else {
+      // Only email exists but not linked, so redirect to linking page
+      // which will tell this user to log out to link
+      throw new Errors.EmailExistsError()
+    }
+  }
 
-  await _ensureCanAddIdentifier(userId, institutionEmail, providerId)
+  providerId = providerId.toString()
 
   await _addAuditLogEntry(
     true,
@@ -126,15 +86,11 @@ async function _addIdentifier(
       }
     }
   }
-
   try {
     // update v2 user record
-    const updatedUser = await User.findOneAndUpdate(query, update, {
+    const updatedUser = User.findOneAndUpdate(query, update, {
       new: true
     }).exec()
-    if (!updatedUser) {
-      throw new OError('No update while linking user')
-    }
     return updatedUser
   } catch (err) {
     if (err.code === 11000) {
@@ -163,14 +119,11 @@ async function _addInstitutionEmail(userId, email, providerId, auditLog) {
   if (emailAlreadyAssociated && emailAlreadyAssociated.confirmedAt) {
     await UserUpdater.promises.updateUser(query, update)
   } else if (emailAlreadyAssociated) {
+    await UserUpdater.promises.confirmEmail(user._id, email)
     await UserUpdater.promises.updateUser(query, update)
   } else {
-    await UserUpdater.promises.addEmailAddress(
-      user._id,
-      email,
-      { university: { id: providerId }, rejectIfBlocklisted: true },
-      auditLog
-    )
+    await UserUpdater.promises.addEmailAddress(user._id, email, {}, auditLog)
+    await UserUpdater.promises.confirmEmail(user._id, email)
     await UserUpdater.promises.updateUser(query, update)
   }
 }
@@ -258,13 +211,7 @@ async function linkAccounts(
     providerName,
     auditLog
   )
-  try {
-    await _addInstitutionEmail(userId, institutionEmail, providerId, auditLog)
-  } catch (error) {
-    await _removeIdentifier(userId, providerId)
-    throw error
-  }
-  await UserUpdater.promises.confirmEmail(userId, institutionEmail) // will set confirmedAt if not set, and will always update reconfirmedAt
+  await _addInstitutionEmail(userId, institutionEmail, providerId, auditLog)
   await _sendLinkedEmail(userId, providerName, institutionEmail)
   // update v1 affiliations record
   if (hasEntitlement) {
@@ -288,6 +235,9 @@ async function unlinkAccounts(
   auditLog
 ) {
   providerId = providerId.toString()
+  const query = {
+    _id: userId
+  }
 
   await _addAuditLogEntry(
     false,
@@ -297,20 +247,7 @@ async function unlinkAccounts(
     providerId,
     providerName
   )
-  // update v2 user
-  await _removeIdentifier(userId, providerId)
-  // update v1 affiliations record
-  await InstitutionsAPI.promises.removeEntitlement(userId, institutionEmail)
-  // send email
-  _sendUnlinkedEmail(primaryEmail, providerName, institutionEmail)
-}
 
-async function _removeIdentifier(userId, providerId) {
-  providerId = providerId.toString()
-
-  const query = {
-    _id: userId
-  }
   const update = {
     $pull: {
       samlIdentifiers: {
@@ -318,7 +255,12 @@ async function _removeIdentifier(userId, providerId) {
       }
     }
   }
+  // update v2 user
   await User.updateOne(query, update).exec()
+  // update v1 affiliations record
+  await InstitutionsAPI.promises.removeEntitlement(userId, institutionEmail)
+  // send email
+  _sendUnlinkedEmail(primaryEmail, providerName, institutionEmail)
 }
 
 async function updateEntitlement(

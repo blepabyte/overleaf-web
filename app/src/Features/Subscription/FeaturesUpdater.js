@@ -30,11 +30,7 @@ const FeaturesUpdater = {
           if (oldFeatures.dropbox === true && features.dropbox === false) {
             logger.log({ userId }, '[FeaturesUpdater] must unlink dropbox')
             const Modules = require('../../infrastructure/Modules')
-            Modules.hooks.fire('removeDropbox', userId, err => {
-              if (err) {
-                logger.error(err)
-              }
-            })
+            Modules.hooks.fire('removeDropbox', userId, () => {})
           }
           return callback()
         })

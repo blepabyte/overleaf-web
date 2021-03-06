@@ -944,19 +944,14 @@ function initialize(webRouter, privateApiRouter, publicApiRouter) {
     UserController.register
   )
   webRouter.post(
-    '/admin/openEditor',
-    AuthorizationMiddleware.ensureUserIsSiteAdmin,
-    AdminController.openEditor
-  )
-  webRouter.post(
     '/admin/closeEditor',
     AuthorizationMiddleware.ensureUserIsSiteAdmin,
     AdminController.closeEditor
   )
   webRouter.post(
-    '/admin/disconnectAllUsers',
+    '/admin/dissconectAllUsers',
     AuthorizationMiddleware.ensureUserIsSiteAdmin,
-    AdminController.disconnectAllUsers
+    AdminController.dissconectAllUsers
   )
   webRouter.post(
     '/admin/flushProjectToTpds',
@@ -981,20 +976,14 @@ function initialize(webRouter, privateApiRouter, publicApiRouter) {
 
   privateApiRouter.post(
     '/disconnectAllUsers',
-    AdminController.disconnectAllUsers
+    AdminController.dissconectAllUsers
   )
 
   privateApiRouter.get('/perfTest', (req, res) => res.send('hello'))
 
-  publicApiRouter.get('/status', (req, res) => {
-    if (!Settings.siteIsOpen) {
-      res.send('web site is closed (web)')
-    } else if (!Settings.editorIsOpen) {
-      res.send('web editor is closed (web)')
-    } else {
-      res.send('web sharelatex is alive (web)')
-    }
-  })
+  publicApiRouter.get('/status', (req, res) =>
+    res.send('web sharelatex is alive (web)')
+  )
   privateApiRouter.get('/status', (req, res) =>
     res.send('web sharelatex is alive (api)')
   )

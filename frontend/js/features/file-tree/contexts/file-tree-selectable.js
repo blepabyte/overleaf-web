@@ -130,14 +130,11 @@ export function FileTreeSelectableProvider({
   useEffect(() => {
     // listen for `editor.openDoc` and selected that doc
     function handleOpenDoc(ev) {
-      const found = findInTree(fileTreeData, ev.detail)
-      if (!found) return
-
-      dispatch({ type: ACTION_TYPES.SELECT, id: found.entity._id })
+      dispatch({ type: ACTION_TYPES.SELECT, id: ev.detail })
     }
     window.addEventListener('editor.openDoc', handleOpenDoc)
     return () => window.removeEventListener('editor.openDoc', handleOpenDoc)
-  }, [fileTreeData])
+  }, [])
 
   return (
     <FileTreeSelectableContext.Provider

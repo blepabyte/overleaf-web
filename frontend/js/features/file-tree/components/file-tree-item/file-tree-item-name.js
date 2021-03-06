@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import PropTypes from 'prop-types'
 
 import { useRefWithAutoFocus } from '../../../../infrastructure/auto-focus'
 
 import { useFileTreeActionable } from '../../contexts/file-tree-actionable'
 
-function FileTreeItemName({ name, isSelected, setIsDraggable }) {
+function FileTreeItemName({ name, isSelected }) {
   const {
     isRenaming,
     startRenaming,
@@ -15,10 +15,6 @@ function FileTreeItemName({ name, isSelected, setIsDraggable }) {
   } = useFileTreeActionable()
 
   const isRenamingEntity = isRenaming && isSelected && !error
-
-  useEffect(() => {
-    setIsDraggable(!isRenamingEntity)
-  }, [setIsDraggable, isRenamingEntity])
 
   if (isRenamingEntity) {
     return (
@@ -40,8 +36,7 @@ function FileTreeItemName({ name, isSelected, setIsDraggable }) {
 
 FileTreeItemName.propTypes = {
   name: PropTypes.string.isRequired,
-  isSelected: PropTypes.bool.isRequired,
-  setIsDraggable: PropTypes.func.isRequired
+  isSelected: PropTypes.bool.isRequired
 }
 
 function DisplayName({ name, isSelected, startRenaming }) {

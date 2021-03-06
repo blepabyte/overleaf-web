@@ -249,25 +249,22 @@ export default ConnectionManager = (function() {
 
       // Site administrators can send the forceDisconnect event to all users
 
-      this.ide.socket.on('forceDisconnect', (message, delay = 10) => {
+      this.ide.socket.on('forceDisconnect', message => {
         this.updateConnectionManagerState('inactive')
-        this.shuttingDown = true // prevent reconnection attempts
         this.$scope.$apply(() => {
           this.$scope.permissions.write = false
           return (this.$scope.connection.forced_disconnect = true)
         })
-        // flush changes before disconnecting
-        this.ide.$scope.$broadcast('flush-changes')
-        setTimeout(() => this.ide.socket.disconnect(), 1000)
-        this.ide.showLockEditorMessageModal(
-          'Please wait',
+        this.ide.socket.disconnect()
+        this.ide.showGenericMessageModal(
+          'Please Refresh',
           `\
-We're performing maintenance on Overleaf and you need to wait a moment.
+We're performing maintenance on Overleaf and you need to refresh the editor.
 Sorry for any inconvenience.
-The editor will refresh automatically in ${delay} seconds.\
+The editor will refresh in automatically in 10 seconds.\
 `
         )
-        return setTimeout(() => location.reload(), delay * 1000)
+        return setTimeout(() => location.reload(), 10 * 1000)
       })
 
       this.ide.socket.on('reconnectGracefully', () => {

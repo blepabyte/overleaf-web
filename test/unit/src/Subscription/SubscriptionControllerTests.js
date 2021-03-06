@@ -109,8 +109,7 @@ describe('SubscriptionController', function() {
         '../../infrastructure/GeoIpLookup': this.GeoIpLookup,
         'logger-sharelatex': {
           log() {},
-          warn() {},
-          error() {}
+          warn() {}
         },
         'settings-sharelatex': this.settings,
         '../User/UserGetter': this.UserGetter,

@@ -76,11 +76,7 @@ App.controller('FileTreeController', function($scope, $modal, ide, $rootScope) {
       }
     })
 
-  if (
-    window.showReactFileTree &&
-    !window.FileTreeReactBridgeOpenNewDocModalListened
-  ) {
-    window.FileTreeReactBridgeOpenNewDocModalListened = true
+  if (window.showReactFileTree) {
     window.addEventListener(
       'FileTreeReactBridge.openNewDocModal',
       ({ detail }) => {
@@ -207,11 +203,7 @@ App.controller('NewFileModalController', function(
     $modalInstance.dismiss('done')
   })
 
-  if (
-    window.showReactFileTree &&
-    !window.FileTreeReactBridgeOpenNewFileModalListened
-  ) {
-    window.FileTreeReactBridgeOpenNewFileModalListened = true
+  if (window.showReactFileTree) {
     window.addEventListener(
       'FileTreeReactBridge.openNewFileModal',
       ({ detail }) => {

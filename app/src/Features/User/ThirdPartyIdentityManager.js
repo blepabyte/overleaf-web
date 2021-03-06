@@ -5,7 +5,6 @@ const EmailOptionsHelper = require(`${APP_ROOT}/Features/Email/EmailOptionsHelpe
 const Errors = require('../Errors/Errors')
 const _ = require('lodash')
 const logger = require('logger-sharelatex')
-const OError = require('@overleaf/o-error')
 const settings = require('settings-sharelatex')
 const { User } = require(`${APP_ROOT}/models/User`)
 const { promisifyAll } = require(`${APP_ROOT}/util/promises`)
@@ -14,12 +13,7 @@ const oauthProviders = settings.oauthProviders || {}
 
 function getUser(providerId, externalUserId, callback) {
   if (providerId == null || externalUserId == null) {
-    return callback(
-      new OError('invalid SSO arguments', {
-        externalUserId,
-        providerId
-      })
-    )
+    return callback(new Error('invalid arguments'))
   }
   const query = _getUserQuery(providerId, externalUserId)
   User.findOne(query, function(err, user) {

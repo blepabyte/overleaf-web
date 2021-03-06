@@ -1,4 +1,3 @@
-const _ = require('lodash')
 const Path = require('path')
 const OError = require('@overleaf/o-error')
 const fs = require('fs')
@@ -34,10 +33,9 @@ const NotificationsBuilder = require('../Notifications/NotificationsBuilder')
 const { V1ConnectionError } = require('../Errors/Errors')
 const Features = require('../../infrastructure/Features')
 const BrandVariationsHandler = require('../BrandVariations/BrandVariationsHandler')
+const { getUserAffiliations } = require('../Institutions/InstitutionsAPI')
 const UserController = require('../User/UserController')
 const AnalyticsManager = require('../Analytics/AnalyticsManager')
-const Modules = require('../../infrastructure/Modules')
-const { shouldUserSeeNewLogsUI } = require('../Helpers/NewLogsUI')
 
 const _ssoAvailable = (affiliation, session, linkedInstitutionIds) => {
   if (!affiliation.institution) return false
@@ -381,6 +379,8 @@ const ProjectController = {
     const timer = new metrics.Timer('project-list')
     const userId = AuthenticationController.getLoggedInUserId(req)
     const currentUser = AuthenticationController.getSessionUser(req)
+    let noV1Connection = false
+    let institutionLinkingError
     async.parallel(
       {
         tags(cb) {
@@ -401,6 +401,7 @@ const ProjectController = {
             currentUser,
             (error, hasPaidSubscription) => {
               if (error != null && error instanceof V1ConnectionError) {
+                noV1Connection = true
                 return cb(null, true)
               }
               cb(error, hasPaidSubscription)
@@ -414,32 +415,16 @@ const ProjectController = {
             cb
           )
         },
-        userEmailsData(cb) {
-          const result = { list: [], allInReconfirmNotificationPeriods: [] }
-
-          UserGetter.getUserFullEmails(userId, (error, fullEmails) => {
+        userAffiliations(cb) {
+          if (!Features.hasFeature('affiliations')) {
+            return cb(null, [])
+          }
+          getUserAffiliations(userId, (error, affiliations) => {
             if (error && error instanceof V1ConnectionError) {
-              return cb(null, result)
+              noV1Connection = true
+              return cb(null, [])
             }
-
-            if (!Features.hasFeature('affiliations')) {
-              result.list = fullEmails
-              return cb(null, result)
-            }
-            Modules.hooks.fire(
-              'allInReconfirmNotificationPeriodsForUser',
-              fullEmails,
-              (error, results) => {
-                // Module.hooks.fire accepts multiple methods
-                // and does async.series
-                const allInReconfirmNotificationPeriods =
-                  (results && results[0]) || []
-                return cb(null, {
-                  list: fullEmails,
-                  allInReconfirmNotificationPeriods
-                })
-              }
-            )
+            cb(error, affiliations)
           })
         }
       },
@@ -448,20 +433,7 @@ const ProjectController = {
           OError.tag(err, 'error getting data for project list page')
           return next(err)
         }
-        const { notifications, user, userEmailsData } = results
-
-        const userEmails = userEmailsData.list || []
-
-        const userAffiliations = userEmails
-          .filter(emailData => !!emailData.affiliation)
-          .map(emailData => {
-            const result = emailData.affiliation
-            result.email = emailData.email
-            return result
-          })
-
-        const { allInReconfirmNotificationPeriods } = userEmailsData
-
+        const { notifications, user, userAffiliations } = results
         // Handle case of deleted user
         if (user == null) {
           UserController.logout(req, res, next)
@@ -477,9 +449,7 @@ const ProjectController = {
         }
 
         // Institution SSO Notifications
-        let reconfirmedViaSAML
         if (Features.hasFeature('saml')) {
-          reconfirmedViaSAML = _.get(req.session, ['saml', 'reconfirmed'])
           const samlSession = req.session.saml
           // Notification: SSO Available
           const linkedInstitutionIds = []
@@ -519,7 +489,7 @@ const ProjectController = {
             if (
               samlSession.requestedEmail &&
               samlSession.emailNonCanonical &&
-              !samlSession.error
+              !samlSession.linkedToAnother
             ) {
               notificationsInstitution.push({
                 institutionEmail: samlSession.emailNonCanonical,
@@ -535,7 +505,7 @@ const ProjectController = {
             if (
               samlSession.registerIntercept &&
               samlSession.institutionEmail &&
-              !samlSession.error
+              !samlSession.linkedToAnother
             ) {
               notificationsInstitution.push({
                 email: samlSession.institutionEmail,
@@ -543,11 +513,20 @@ const ProjectController = {
               })
             }
 
+            // Notification: Already linked to another account
+            if (samlSession.linkedToAnother) {
+              notificationsInstitution.push({
+                templateKey: 'notification_institution_sso_linked_by_another'
+              })
+            }
+
             // Notification: When there is a session error
             if (samlSession.error) {
+              institutionLinkingError = samlSession.error
               notificationsInstitution.push({
+                message: samlSession.error.message,
                 templateKey: 'notification_institution_sso_error',
-                error: samlSession.error
+                tryAgain: samlSession.error.tryAgain
               })
             }
           }
@@ -561,6 +540,7 @@ const ProjectController = {
           results.projects,
           userId
         )
+        const warnings = ProjectController._buildWarningsList(noV1Connection)
 
         // in v2 add notifications for matching university IPs
         if (Settings.overleaf != null && req.ip !== user.lastLoginIp) {
@@ -578,13 +558,12 @@ const ProjectController = {
             tags,
             notifications: notifications || [],
             notificationsInstitution,
-            allInReconfirmNotificationPeriods,
             portalTemplates,
             user,
             userAffiliations,
-            userEmails,
             hasSubscription: results.hasSubscription,
-            reconfirmedViaSAML,
+            institutionLinkingError,
+            warnings,
             zipFileSizeLimit: Settings.maxUploadSize
           }
 
@@ -795,7 +774,6 @@ const ProjectController = {
               })
             }
 
-            const userShouldSeeNewLogsUI = shouldUserSeeNewLogsUI(user)
             const wantsOldLogsUI =
               req.query && req.query.new_logs_ui === 'false'
 
@@ -854,10 +832,8 @@ const ProjectController = {
               gitBridgePublicBaseUrl: Settings.gitBridgePublicBaseUrl,
               wsUrl,
               showSupport: Features.hasFeature('support'),
-              showNewLogsUI: userShouldSeeNewLogsUI && !wantsOldLogsUI,
-              showNewNavigationUI:
-                req.query && req.query.new_navigation_ui === 'true',
-              showReactFileTree: !wantsOldFileTreeUI
+              showNewLogsUI: user.alphaProgram && !wantsOldLogsUI,
+              showReactFileTree: user.betaProgram && !wantsOldFileTreeUI
             })
             timer.done()
           }
@@ -1013,6 +989,14 @@ const ProjectController = {
         callback(null, projects)
       }
     )
+  },
+
+  _buildWarningsList(noConnection) {
+    return noConnection
+      ? [
+          'Error accessing Overleaf V1. Some of your projects or features may be missing.'
+        ]
+      : []
   },
 
   _buildPortalTemplatesList(affiliations) {

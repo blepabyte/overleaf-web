@@ -2,6 +2,7 @@ const { expect } = require('chai')
 const async = require('async')
 const User = require('./helpers/User')
 const RecurlySubscription = require('./helpers/RecurlySubscription')
+require('./helpers/MockV1Api')
 
 describe('Subscriptions', function() {
   describe('update', function() {

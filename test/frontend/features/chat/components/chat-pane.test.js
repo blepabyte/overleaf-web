@@ -4,14 +4,18 @@ import { screen, waitForElementToBeRemoved } from '@testing-library/react'
 import fetchMock from 'fetch-mock'
 
 import ChatPane from '../../../../../frontend/js/features/chat/components/chat-pane'
+import { renderWithEditorContext } from '../../../helpers/render-with-context'
 import {
-  renderWithChatContext,
-  cleanUpContext
-} from '../../../helpers/render-with-context'
-import { stubMathJax, tearDownMathJaxStubs } from './stubs'
+  stubChatStore,
+  stubMathJax,
+  stubUIConfig,
+  tearDownChatStore,
+  tearDownMathJaxStubs,
+  tearDownUIConfigStubs
+} from './stubs'
 
 describe('<ChatPane />', function() {
-  const user = {
+  const currentUser = {
     id: 'fake_user',
     first_name: 'fake_user_first_name',
     email: 'fake@example.com'
@@ -19,64 +23,71 @@ describe('<ChatPane />', function() {
 
   const testMessages = [
     {
-      id: 'msg_1',
       content: 'a message',
-      user,
+      user: currentUser,
       timestamp: new Date().getTime()
     },
     {
-      id: 'msg_2',
       content: 'another message',
-      user,
+      user: currentUser,
       timestamp: new Date().getTime()
     }
   ]
 
   beforeEach(function() {
-    fetchMock.reset()
-    cleanUpContext()
-
+    stubChatStore({ user: currentUser })
+    stubUIConfig()
     stubMathJax()
+    fetchMock.reset()
   })
 
   afterEach(function() {
+    tearDownChatStore()
+    tearDownUIConfigStubs()
     tearDownMathJaxStubs()
+    fetchMock.reset()
   })
 
   it('renders multiple messages', async function() {
     fetchMock.get(/messages/, testMessages)
-
-    renderWithChatContext(<ChatPane />, { user })
+    // unmounting before `beforeEach` block is executed is required to prevent cleanup errors
+    const { unmount } = renderWithEditorContext(
+      <ChatPane resetUnreadMessages={() => {}} chatIsOpen />
+    )
 
     await screen.findByText('a message')
     await screen.findByText('another message')
+    unmount()
   })
 
   it('A loading spinner is rendered while the messages are loading, then disappears', async function() {
     fetchMock.get(/messages/, [])
-
-    renderWithChatContext(<ChatPane />, { user })
-
+    const { unmount } = renderWithEditorContext(
+      <ChatPane resetUnreadMessages={() => {}} chatIsOpen />
+    )
     await waitForElementToBeRemoved(() => screen.getByText('Loading…'))
+    unmount()
   })
 
   describe('"send your first message" placeholder', function() {
     it('is rendered when there are no messages ', async function() {
       fetchMock.get(/messages/, [])
-
-      renderWithChatContext(<ChatPane />, { user })
-
+      const { unmount } = renderWithEditorContext(
+        <ChatPane resetUnreadMessages={() => {}} chatIsOpen />
+      )
       await screen.findByText('Send your first message to your collaborators')
+      unmount()
     })
 
     it('is not rendered when messages are displayed', function() {
       fetchMock.get(/messages/, testMessages)
-
-      renderWithChatContext(<ChatPane />, { user })
-
+      const { unmount } = renderWithEditorContext(
+        <ChatPane resetUnreadMessages={() => {}} chatIsOpen />
+      )
       expect(
         screen.queryByText('Send your first message to your collaborators')
       ).to.not.exist
+      unmount()
     })
   })
 })

@@ -4,7 +4,14 @@ import { expect } from 'chai'
 import { screen, render, fireEvent } from '@testing-library/react'
 
 import MessageList from '../../../../../frontend/js/features/chat/components/message-list'
-import { stubMathJax, tearDownMathJaxStubs } from './stubs'
+import {
+  stubChatStore,
+  stubMathJax,
+  stubUIConfig,
+  tearDownChatStore,
+  tearDownMathJaxStubs,
+  tearDownUIConfigStubs
+} from './stubs'
 
 describe('<MessageList />', function() {
   const currentUser = {
@@ -16,13 +23,11 @@ describe('<MessageList />', function() {
   function createMessages() {
     return [
       {
-        id: '1',
         contents: ['a message'],
         user: currentUser,
         timestamp: new Date().getTime()
       },
       {
-        id: '2',
         contents: ['another message'],
         user: currentUser,
         timestamp: new Date().getTime()
@@ -31,10 +36,14 @@ describe('<MessageList />', function() {
   }
 
   before(function() {
+    stubChatStore({ user: currentUser }) // required by ColorManager
+    stubUIConfig()
     stubMathJax()
   })
 
   after(function() {
+    tearDownChatStore()
+    tearDownUIConfigStubs()
     tearDownMathJaxStubs()
   })
 

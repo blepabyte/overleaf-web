@@ -183,12 +183,6 @@ describe('<FileTreeRoot/>', function() {
 
     screen.getByRole('treeitem', { name: 'main.tex', selected: true })
 
-    // entities not found should be ignored
-    window.dispatchEvent(
-      new CustomEvent('editor.openDoc', { detail: 'not-an-id' })
-    )
-    screen.getByRole('treeitem', { name: 'main.tex', selected: true })
-
     window.dispatchEvent(
       new CustomEvent('editor.openDoc', { detail: '789ghi' })
     )

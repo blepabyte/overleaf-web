@@ -10,27 +10,22 @@ describe('localStorage', function() {
   })
 
   after(function() {
-    Object.defineProperty(global, 'localStorage', {
-      value: originalLocalStorage
-    })
+    global.localStorage = originalLocalStorage
   })
 
   beforeEach(function() {
-    Object.defineProperty(global, 'localStorage', {
-      value: {
-        getItem: sinon.stub().returns(null),
-        setItem: sinon.stub(),
-        clear: sinon.stub(),
-        removeItem: sinon.stub()
-      }
-    })
-
+    global.localStorage = {
+      getItem: sinon.stub().returns(null),
+      setItem: sinon.stub(),
+      clear: sinon.stub(),
+      removeItem: sinon.stub()
+    }
     global.console.error = sinon.stub()
   })
 
   afterEach(function() {
     global.console.error.reset()
-    Object.defineProperty(global, 'localStorage', { value: undefined })
+    delete global.localStorage
   })
 
   it('getItem', function() {

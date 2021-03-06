@@ -15,13 +15,11 @@ const otherUser = {
 function createTestMessageList() {
   return [
     {
-      id: 'msg_1',
       contents: ['hello', 'world'],
       timestamp: new Date().getTime(),
       user: otherUser
     },
     {
-      id: 'msg_2',
       contents: ['foo'],
       timestamp: new Date().getTime(),
       user: testUser
@@ -32,12 +30,11 @@ function createTestMessageList() {
 describe('prependMessages()', function() {
   function createTestMessages() {
     const message1 = {
-      id: 'prepended_message',
       content: 'hello',
       timestamp: new Date().getTime(),
       user: testUser
     }
-    const message2 = { ...message1, id: 'prepended_message_2' }
+    const message2 = { ...message1 }
     return [message1, message2]
   }
 
@@ -45,7 +42,6 @@ describe('prependMessages()', function() {
     const messages = createTestMessages()
     expect(prependMessages([], messages)).to.deep.equal([
       {
-        id: messages[0].id,
         timestamp: messages[0].timestamp,
         user: messages[0].user,
         contents: [messages[0].content, messages[1].content]
@@ -66,7 +62,6 @@ describe('prependMessages()', function() {
       const result = prependMessages(createTestMessageList(), messages)
       expect(result.length).to.equal(list.length + 1)
       expect(result[0]).to.deep.equal({
-        id: messages[0].id,
         timestamp: messages[0].timestamp,
         user: messages[0].user,
         contents: [messages[0].content, messages[1].content]
@@ -78,13 +73,11 @@ describe('prependMessages()', function() {
       const result = prependMessages(createTestMessageList(), messages)
       expect(result.length).to.equal(list.length + 2)
       expect(result[0]).to.deep.equal({
-        id: messages[0].id,
         timestamp: messages[0].timestamp,
         user: messages[0].user,
         contents: [messages[0].content]
       })
       expect(result[1]).to.deep.equal({
-        id: messages[1].id,
         timestamp: messages[1].timestamp,
         user: messages[1].user,
         contents: [messages[1].content]
@@ -105,13 +98,11 @@ describe('prependMessages()', function() {
       const result = prependMessages(createTestMessageList(), messages)
       expect(result.length).to.equal(list.length + 2)
       expect(result[0]).to.deep.equal({
-        id: messages[0].id,
         timestamp: messages[0].timestamp,
         user: messages[0].user,
         contents: [messages[0].content]
       })
       expect(result[1]).to.deep.equal({
-        id: messages[1].id,
         timestamp: messages[1].timestamp,
         user: messages[1].user,
         contents: [messages[1].content]
@@ -127,7 +118,6 @@ describe('prependMessages()', function() {
     const result = prependMessages(createTestMessageList(), messages)
     expect(result.length).to.equal(list.length)
     expect(result[0]).to.deep.equal({
-      id: messages[0].id,
       timestamp: messages[0].timestamp,
       user: messages[0].user,
       contents: [messages[0].content, messages[1].content, ...list[0].contents]
@@ -138,7 +128,6 @@ describe('prependMessages()', function() {
 describe('appendMessage()', function() {
   function createTestMessage() {
     return {
-      id: 'appended_message',
       content: 'hi!',
       timestamp: new Date().getTime(),
       user: testUser
@@ -149,7 +138,6 @@ describe('appendMessage()', function() {
     const testMessage = createTestMessage()
     expect(appendMessage([], testMessage)).to.deep.equal([
       {
-        id: 'appended_message',
         timestamp: testMessage.timestamp,
         user: testMessage.user,
         contents: [testMessage.content]
@@ -190,7 +178,6 @@ describe('appendMessage()', function() {
         const result = appendMessage(list, message)
         expect(result.length).to.equal(list.length + 1)
         expect(result[2]).to.deep.equal({
-          id: 'appended_message',
           timestamp: message.timestamp,
           user: message.user,
           contents: [message.content]
@@ -212,7 +199,6 @@ describe('appendMessage()', function() {
       const result = appendMessage(list, message)
       expect(result.length).to.equal(3)
       expect(result[2]).to.deep.equal({
-        id: 'appended_message',
         timestamp: message.timestamp,
         user: message.user,
         contents: [message.content]
@@ -225,7 +211,6 @@ describe('appendMessage()', function() {
       const result = appendMessage(list, message)
       expect(result.length).to.equal(3)
       expect(result[2]).to.deep.equal({
-        id: 'appended_message',
         timestamp: message.timestamp,
         user: message.user,
         contents: [message.content]

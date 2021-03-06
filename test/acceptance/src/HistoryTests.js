@@ -14,14 +14,8 @@
 const { expect } = require('chai')
 
 const { db, ObjectId } = require('../../../app/src/infrastructure/mongodb')
+const MockV1HistoryApi = require('./helpers/MockV1HistoryApi')
 const User = require('./helpers/User')
-const MockV1HistoryApiClass = require('./mocks/MockV1HistoryApi')
-
-let MockV1HistoryApi
-
-before(function() {
-  MockV1HistoryApi = MockV1HistoryApiClass.instance()
-})
 
 describe('History', function() {
   beforeEach(function(done) {
@@ -99,6 +93,9 @@ describe('History', function() {
             done
           )
         })
+      })
+      beforeEach(function resetCounter() {
+        MockV1HistoryApi.resetCounter()
       })
 
       it('should abort the upstream request', function(done) {

@@ -16,7 +16,6 @@ describe('ChatStore', function() {
   const testProjectId = 'project-123'
 
   const testMessage = {
-    id: 'msg_1',
     content: 'hello',
     timestamp: new Date().getTime(),
     user
@@ -63,9 +62,8 @@ describe('ChatStore', function() {
     })
 
     it('when the message is from other user, it is added to the messages list', function() {
-      mockSocketMessage({ ...testMessage, id: 'other_user_msg' })
+      mockSocketMessage({ ...testMessage, id: 'other_user' })
       expect(store.messages[store.messages.length - 1]).to.deep.equal({
-        id: 'other_user_msg',
         user: testMessage.user,
         timestamp: testMessage.timestamp,
         contents: [testMessage.content]
@@ -86,14 +84,12 @@ describe('ChatStore', function() {
         // next message by a different user is added normally
         const otherMessage = {
           ...testMessage,
-          id: 'other_user_msg',
           user: { id: 'other_user' },
           content: 'other'
         }
         mockSocketMessage(otherMessage)
         expect(store.messages.length).to.equal(originalMessageList.length + 1)
         expect(store.messages[store.messages.length - 1]).to.deep.equal({
-          id: otherMessage.id,
           user: otherMessage.user,
           timestamp: otherMessage.timestamp,
           contents: [otherMessage.content]
@@ -108,11 +104,6 @@ describe('ChatStore', function() {
         mockSocketMessage(testMessage)
 
         expect(subscriber).not.to.be.called
-      })
-
-      it("have an 'id' property", async function() {
-        await store.sendMessage(testMessage.content)
-        expect(typeof store.messages[0].id).to.equal('string')
       })
     })
   })
@@ -131,7 +122,6 @@ describe('ChatStore', function() {
       await store.loadMoreMessages()
       expect(store.messages.length).to.equal(originalMessageList.length + 1)
       expect(store.messages[store.messages.length - 1]).to.deep.equal({
-        id: testMessage.id,
         user: testMessage.user,
         timestamp: testMessage.timestamp,
         contents: [testMessage.content]

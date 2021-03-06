@@ -117,15 +117,10 @@ App.directive('aceEditor', function(
       const editor = ace.edit(element.find('.ace-editor-body')[0])
       editor.$blockScrolling = Infinity
 
-      // Besides the main editor, other elements will re-use this directive
-      //  for displaying read-only content -- e.g. the history panes.
-      const editorAcceptsChanges = attrs.aceEditor === 'editor'
-      if (editorAcceptsChanges) {
-        // end-to-end check for edits -> acks, globally on any doc
-        // This may catch a missing attached ShareJsDoc that in turn bails out
-        //  on missing acks.
-        ide.globalEditorWatchdogManager.attachToEditor('Ace', editor)
-      }
+      // end-to-end check for edits -> acks, globally on any doc
+      // This may catch a missing attached ShareJsDoc that in turn bails out
+      //  on missing acks.
+      ide.globalEditorWatchdogManager.attachToEditor('Ace', editor)
 
       // auto-insertion of braces, brackets, dollars
       editor.setOption('behavioursEnabled', scope.autoPairDelimiters || false)

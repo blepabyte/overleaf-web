@@ -1,7 +1,6 @@
 import EventEmitter from '../../../utils/EventEmitter'
 import { appendMessage, prependMessages } from './message-list-appender'
 import { getJSON, postJSON } from '../../../infrastructure/fetch-json'
-import { v4 as uuid } from 'uuid'
 
 export const MESSAGE_LIMIT = 50
 
@@ -89,7 +88,6 @@ export class ChatStore {
     }
     this._justSent = true
     this.messages = appendMessage(this.messages, {
-      id: uuid(), // uuid valid for this session, ensures all messages have an identifier
       user: this._user,
       content: message,
       timestamp: Date.now()

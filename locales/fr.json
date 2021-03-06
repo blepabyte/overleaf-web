@@ -1,8 +1,4 @@
 {
-  "github_symlink_error": "Votre dépôt GitHub contient des liens symboliques qui ne sont pas encore supportés par Overleaf. Veuillez les retirer et réessayer.",
-  "address_line_1": "Adresse",
-  "address_line_2": "Adresse (ligne 2, optionnel)",
-  "postal_code": "Code postal",
   "reload_editor": "Actualiser l’éditeur",
   "logs_pane_beta_message": "Nous testons un nouveau panneau de fichiers journaux dans le cadre du programme de bêta",
   "logs_pane_beta_message_popup": "Nous testons un nouveau panneau de fichiers journaux dans le cadre du programme de bêta. Cliquez ici pour donner votre avis et gérer votre participation au programme de bêta.",
@@ -1288,6 +1284,7 @@
   "highest_priority_compiling": "Compilation de plus haute priorité",
   "dropbox_sync": "Synchronisation Dropbox",
   "beta": "Bêta",
+  "file_tree_badge_tooltip": "Nous avons apporté quelques améliorations à l’arborescence des fichiers. Nous espérons que vous les apprécierez ! Cliquez ici pour gérer votre participation au programme de bêta.",
   "sign_up_now": "Inscrivez-vous maintenant ",
   "annual": "Annuel",
   "half_price_student": "Moitié prix pour les étudiant·e·s",

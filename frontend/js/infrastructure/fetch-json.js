@@ -3,78 +3,23 @@
 // - set the JSON content-type in the request headers
 // - throw errors on non-ok response
 // - parse JSON response body, unless response is empty
-import OError from '@overleaf/o-error'
+const OError = require('@overleaf/o-error')
 
-/**
- * @typedef {Object} FetchOptions
- * @extends RequestInit
- * @property {Object} body
- */
-
-/**
- * @param {string} path
- * @param {FetchOptions} [options]
- */
 export function getJSON(path, options) {
   return fetchJSON(path, { ...options, method: 'GET' })
 }
 
-/**
- * @param {string} path
- * @param {FetchOptions} [options]
- */
 export function postJSON(path, options) {
   return fetchJSON(path, { ...options, method: 'POST' })
 }
 
-/**
- * @param {string} path
- * @param {FetchOptions} [options]
- */
-export function putJSON(path, options) {
-  return fetchJSON(path, { ...options, method: 'PUT' })
-}
-
-/**
- * @param {string} path
- * @param {FetchOptions} [options]
- */
 export function deleteJSON(path, options) {
   return fetchJSON(path, { ...options, method: 'DELETE' })
 }
 
-export class FetchError extends OError {
-  /**
-   * @param {string} message
-   * @param {string} url
-   * @param {FetchOptions} [options]
-   * @param {Response} [response]
-   * @param {Object} [data]
-   */
-  constructor(message, url, options, response, data) {
-    super(message, { statusCode: response ? response.status : undefined })
-    this.url = url
-    this.options = options
-    this.response = response
-    this.data = data
-  }
-}
-
-/**
- * @param {string} path
- * @param {FetchOptions} [options]
- *
- * @return Promise<Object>
- */
-function fetchJSON(
+export default function fetchJSON(
   path,
-  {
-    body = {},
-    headers = {},
-    method = 'GET',
-    credentials = 'same-origin',
-    ...otherOptions
-  }
+  { body = {}, headers = {}, method = 'GET', ...otherOptions }
 ) {
   const options = {
     ...otherOptions,
@@ -84,7 +29,6 @@ function fetchJSON(
       'X-Csrf-Token': window.csrfToken,
       Accept: 'application/json'
     },
-    credentials,
     method
   }
 
@@ -93,58 +37,36 @@ function fetchJSON(
   }
 
   return fetch(path, options)
-    .catch(error => {
-      // the fetch failed
-      throw new FetchError(
-        'There was an error fetching the JSON',
-        path,
-        options
-      ).withCause(error)
-    })
-    .then(response => {
-      return parseResponseBody(response)
-        .catch(error => {
-          // parsing the response body failed
-          throw new FetchError(
-            'There was an error parsing the response body',
-            path,
-            options,
-            response
-          ).withCause(error)
+    .then(parseResponseBody)
+    .then(({ responseBody, response }) => {
+      if (!response.ok) {
+        throw new OError(response.statusText, {
+          statusCode: response.status,
+          responseBody,
+          response
         })
-        .then(data => {
-          if (!response.ok) {
-            // the response from the server was not 2xx
-            throw new FetchError(
-              response.statusText,
-              path,
-              options,
-              response,
-              data
-            )
-          }
+      }
 
-          return data
-        })
+      return responseBody
     })
 }
 
-/**
- * @param {Response} response
- * @returns {Promise<Object>}
- */
 function parseResponseBody(response) {
   const contentType = response.headers.get('Content-Type')
   if (/application\/json/.test(contentType)) {
-    return response.json()
+    return response.json().then(json => {
+      return { responseBody: json, response }
+    })
   } else if (
     /text\/plain/.test(contentType) ||
     /text\/html/.test(contentType)
   ) {
-    return response.text().then(message => ({ message }))
+    return response.text().then(text => {
+      return { responseBody: { message: text }, response }
+    })
   } else {
     // response body ignored as content-type is either not set (e.g. 204
     // responses) or unsupported
-    return Promise.resolve({})
+    return Promise.resolve({ responseBody: {}, response })
   }
 }

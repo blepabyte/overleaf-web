@@ -225,10 +225,6 @@ module.exports = settings =
 	wsUrlV2Percentage: parseInt(process.env['WEBSOCKET_URL_V2_PERCENTAGE'] || '0', 10)
 	wsRetryHandshake: parseInt(process.env['WEBSOCKET_RETRY_HANDSHAKE'] || '5', 10)
 
-	# Compile UI rollout percentages
-	logsUIPercentageBeta: parseInt(process.env['LOGS_UI_PERCENTAGE_BETA'] || '0', 10)
-	logsUIPercentage: parseInt(process.env['LOGS_UI_PERCENTAGE'] || '0', 10)
-
 	# cookie domain
 	# use full domain for cookies to only be accessible from that domain,
 	# replace subdomain with dot to have them accessible on all subdomains
@@ -423,7 +419,7 @@ module.exports = settings =
 	# Should javascript assets be served minified or not. Note that you will
 	# need to run `grunt compile:minify` within the web-sharelatex directory
 	# to generate these.
-	useMinifiedJs: false
+	useMinifiedJs: process.env['MINIFIED_JS'] == 'true' or false
 
 	# Should static assets be sent with a header to tell the browser to cache
 	# them.
@@ -680,8 +676,3 @@ module.exports = settings =
 					'th': [ 'abbr', 'headers', 'colspan', 'rowspan', 'scope', 'sorted', 'style' ]
 					'tr': [ 'class' ]
 					'video': [ 'alt', 'class', 'controls', 'height', 'width' ]
-
-	overleafModuleImports: {
-		# modules to import (an empty array for each set of modules)
-	}
-

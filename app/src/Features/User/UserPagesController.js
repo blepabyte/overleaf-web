@@ -30,19 +30,15 @@ const UserPagesController = {
   loginPage(req, res) {
     // if user is being sent to /login with explicit redirect (redir=/foo),
     // such as being sent from the editor to /login, then set the redirect explicitly
-    let isRedirected = false
-
     if (
       req.query.redir != null &&
       AuthenticationController._getRedirectFromSession(req) == null
     ) {
-      isRedirected = true
       AuthenticationController.setRedirectInSession(req, req.query.redir)
     }
     res.render('user/login', {
       title: 'login',
-      email: req.query.email,
-      isRedirected
+      email: req.query.email
     })
   },
 
@@ -70,7 +66,6 @@ const UserPagesController = {
 
   settingsPage(req, res, next) {
     const userId = AuthenticationController.getLoggedInUserId(req)
-    const reconfirmationRemoveEmail = req.query.remove
     // SSO
     const ssoError = req.session.ssoError
     if (ssoError) {
@@ -87,7 +82,10 @@ const UserPagesController = {
         institutionLinked
       )
     }
-    const samlError = _.get(req.session, ['saml', 'error'])
+    const institutionLinkedToAnother = _.get(req.session, [
+      'saml',
+      'linkedToAnother'
+    ])
     const institutionEmailNonCanonical = _.get(req.session, [
       'saml',
       'emailNonCanonical'
@@ -96,8 +94,7 @@ const UserPagesController = {
       'saml',
       'requestedEmail'
     ])
-
-    const reconfirmedViaSAML = _.get(req.session, ['saml', 'reconfirmed'])
+    const institutionLinkingError = _.get(req.session, ['saml', 'error'])
     delete req.session.saml
     let shouldAllowEditingDetails = true
     if (Settings.ldap && Settings.ldap.updateUserDetailsOnLogin) {
@@ -125,13 +122,12 @@ const UserPagesController = {
         ),
         oauthUseV2: Settings.oauthUseV2 || false,
         institutionLinked,
-        samlError,
+        institutionLinkedToAnother,
         institutionEmailNonCanonical:
           institutionEmailNonCanonical && institutionRequestedEmail
             ? institutionEmailNonCanonical
             : undefined,
-        reconfirmedViaSAML,
-        reconfirmationRemoveEmail,
+        institutionLinkingError,
         samlBeta: req.session.samlBeta,
         ssoError: ssoError,
         thirdPartyIds: UserPagesController._restructureThirdPartyIds(user)
