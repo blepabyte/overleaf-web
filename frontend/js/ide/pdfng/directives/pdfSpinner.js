@@ -17,7 +17,7 @@ export default App.factory('pdfSpinner', function() {
   let pdfSpinner
   return (pdfSpinner = class pdfSpinner {
     constructor() {
-      this.spinning = false
+      window.spinning = false
     }
     // handler for spinners
 
@@ -33,15 +33,15 @@ export default App.factory('pdfSpinner', function() {
     }
 
     start(element) {
-      this.spinning = true
+      window.spinning = true
       return element.find('.fa-spinner').addClass('fa-spin')
     }
 
     stop(element) {
-      if (this.spinning) {
+      if (window.spinning) {
         window.fuckingForcePDFReload()
       }
-      this.spinning = false
+      window.spinning = false
       return element.find('.fa-spinner').removeClass('fa-spin')
     }
 
