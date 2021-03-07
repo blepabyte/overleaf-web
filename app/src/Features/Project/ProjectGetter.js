@@ -1,6 +1,6 @@
 /* eslint-disable
     camelcase,
-    node/handle-callback-err,
+    handle-callback-err,
     max-len,
     no-unused-vars,
 */
@@ -16,7 +16,7 @@
 const { db } = require('../../infrastructure/mongodb')
 const { normalizeQuery } = require('../Helpers/Mongo')
 const OError = require('@overleaf/o-error')
-const metrics = require('@overleaf/metrics')
+const metrics = require('metrics-sharelatex')
 const async = require('async')
 const { promisifyAll } = require('../../util/promises')
 const { Project } = require('../../models/Project')

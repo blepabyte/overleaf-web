@@ -7,8 +7,6 @@ block vars
 
 block content
 	.editor(ng-controller="IdeController").full-size
-		//- required by react2angular-shared-context, must be rendered as a top level component
-		shared-context-react()
 		.loading-screen(ng-if="state.loading")
 			.loading-screen-brand-container
 				.loading-screen-brand(
@@ -22,7 +20,7 @@ block content
 			p.loading-screen-error(ng-if="state.error").ng-cloak
 				span(ng-bind-html="state.error")
 
-		.global-alerts(ng-cloak ng-hide="editor.error_state")
+		.global-alerts(ng-cloak)
 			.alert.alert-danger.small(ng-if="connection.forced_disconnect")
 				strong #{translate("disconnected")}
 				|  #{translate("please_refresh")}
@@ -94,10 +92,7 @@ block content
 					custom-toggler-msg-when-closed=hasFeature('custom-togglers') ? translate("tooltip_show_filetree") : false
 				)
 					.ui-layout-west
-						if showReactFileTree
-							include ./editor/file-tree-react
-						else
-							include ./editor/file-tree
+						include ./editor/file-tree
 						include ./editor/history/fileTreeV2
 
 					.ui-layout-center
@@ -107,10 +102,12 @@ block content
 
 			if !isRestrictedTokenMember
 				.ui-layout-east
-					aside.chat(
-						ng-controller="ReactChatController"
-					)
-						chat(reset-unread-messages="resetUnreadMessages" chat-is-open="chatIsOpen")
+					if showNewChatUI
+						include ./editor/chat-react
+					else
+						include ./editor/chat
+
+	include ./editor/hotkeys
 
 	script(type="text/ng-template", id="genericMessageModalTemplate")
 		.modal-header
@@ -149,7 +146,7 @@ block content
 					| {{editorContent}}
 
 		.modal-footer
-			button.btn.btn-info(ng-click="done()") #{translate("reload_editor")}
+			button.btn.btn-info(ng-click="done()") #{translate("ok")}
 
 	script(type="text/ng-template", id="lockEditorModalTemplate")
 		.modal-header
@@ -159,7 +156,7 @@ block content
 	//- We need to do .replace(/\//g, '\\/') do that '</script>' -> '<\/script>'
 	//- and doesn't prematurely end the script tag.
 	script#data(type="application/json").
-		!{StringHelper.stringifyJsonForScript({ userSettings: userSettings, user: user, trackChangesState: trackChangesState, useV2History: useV2History, enabledLinkedFileTypes: settings.enabledLinkedFileTypes, brandVariation: brandVariation })}
+		!{StringHelper.stringifyJsonForScript({ userSettings: userSettings, user: user, trackChangesState: trackChangesState, useV2History: useV2History, enabledLinkedFileTypes: settings.enabledLinkedFileTypes, brandVariation: brandVariation, experimentId: experimentId })}
 
 	script(type='text/javascript').
 		window.data = JSON.parse(document.querySelector("#data").text);
@@ -186,7 +183,6 @@ block content
 		//- used in public/js/libs/sharejs.js
 		window.useShareJsHash = true
 		window.wsRetryHandshake = #{settings.wsRetryHandshake}
-		window.showReactFileTree = "!{showReactFileTree}" === 'true'
 
 	- if (settings.overleaf != null)
 		script(type='text/javascript').

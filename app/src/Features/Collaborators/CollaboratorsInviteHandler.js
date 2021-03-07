@@ -1,5 +1,5 @@
 /* eslint-disable
-    node/handle-callback-err,
+    handle-callback-err,
     max-len,
     no-unused-vars,
 */
@@ -18,6 +18,8 @@ const CollaboratorsEmailHandler = require('./CollaboratorsEmailHandler')
 const CollaboratorsHandler = require('./CollaboratorsHandler')
 const UserGetter = require('../User/UserGetter')
 const ProjectGetter = require('../Project/ProjectGetter')
+const Async = require('async')
+const PrivilegeLevels = require('../Authorization/PrivilegeLevels')
 const Errors = require('../Errors/Errors')
 const Crypto = require('crypto')
 const NotificationsBuilder = require('../Notifications/NotificationsBuilder')
@@ -49,7 +51,7 @@ const CollaboratorsInviteHandler = {
       callback = function(err, count) {}
     }
     logger.log({ projectId }, 'counting invites for project')
-    return ProjectInvite.countDocuments({ projectId }, function(err, count) {
+    return ProjectInvite.count({ projectId }, function(err, count) {
       if (err != null) {
         OError.tag(err, 'error getting invites from mongo', {
           projectId
@@ -210,7 +212,7 @@ const CollaboratorsInviteHandler = {
       callback = function(err) {}
     }
     logger.log({ projectId, inviteId }, 'removing invite')
-    return ProjectInvite.deleteOne({ projectId, _id: inviteId }, function(err) {
+    return ProjectInvite.remove({ projectId, _id: inviteId }, function(err) {
       if (err != null) {
         OError.tag(err, 'error removing invite', {
           projectId,
@@ -331,7 +333,7 @@ const CollaboratorsInviteHandler = {
             }
             // Remove invite
             logger.log({ projectId, inviteId }, 'removing invite')
-            return ProjectInvite.deleteOne({ _id: inviteId }, function(err) {
+            return ProjectInvite.remove({ _id: inviteId }, function(err) {
               if (err != null) {
                 OError.tag(err, 'error removing invite', {
                   projectId,

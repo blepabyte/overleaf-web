@@ -1,6 +1,6 @@
 /* eslint-disable
     camelcase,
-    node/handle-callback-err,
+    handle-callback-err,
     max-len,
     no-unused-vars,
 */
@@ -93,7 +93,9 @@ module.exports = V1Handler = {
           return callback(null, true)
         } else {
           err = new Error(
-            `Unexpected status from v1 password reset api: ${response.statusCode}`
+            `Unexpected status from v1 password reset api: ${
+              response.statusCode
+            }`
           )
           return callback(err, false)
         }

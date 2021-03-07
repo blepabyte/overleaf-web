@@ -138,7 +138,7 @@ describe('EditorHttpController', function() {
         '../Project/ProjectEditorHandler': this.ProjectEditorHandler,
         'logger-sharelatex': this.logger,
         './EditorController': this.EditorController,
-        '@overleaf/metrics': this.Metrics,
+        'metrics-sharelatex': this.Metrics,
         '../Collaborators/CollaboratorsGetter': this.CollaboratorsGetter,
         '../Collaborators/CollaboratorsHandler': this.CollaboratorsHandler,
         '../Collaborators/CollaboratorsInviteHandler': this
@@ -149,7 +149,8 @@ describe('EditorHttpController', function() {
         '../../infrastructure/FileWriter': this.FileWriter,
         '../Project/ProjectEntityUpdateHandler': this
           .ProjectEntityUpdateHandler,
-        '../Errors/HttpErrorHandler': this.HttpErrorHandler
+        '../Errors/HttpErrorHandler': this.HttpErrorHandler,
+        '../Errors/Errors': Errors
       }
     })
   })

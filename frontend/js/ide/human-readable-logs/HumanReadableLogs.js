@@ -1,3 +1,15 @@
+/* eslint-disable
+    max-len,
+*/
+// TODO: This file was created by bulk-decaffeinate.
+// Fix any style issues and re-enable lint.
+/*
+ * decaffeinate suggestions:
+ * DS101: Remove unnecessary use of Array.from
+ * DS102: Remove unnecessary code created because of implicit returns
+ * DS207: Consider shorter variations of null checks
+ * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
+ */
 import LogParser from 'libs/latex-log-parser'
 import ruleset from './HumanReadableLogsRules'
 
@@ -11,7 +23,7 @@ export default {
     }
 
     const _getRule = function(logMessage) {
-      for (let rule of ruleset) {
+      for (let rule of Array.from(ruleset)) {
         if (rule.regexToMatch.test(logMessage)) {
           return rule
         }
@@ -20,7 +32,7 @@ export default {
 
     const seenErrorTypes = {} // keep track of types of errors seen
 
-    for (let entry of parsedLogEntries.all) {
+    for (let entry of Array.from(parsedLogEntries.all)) {
       const ruleDetails = _getRule(entry.message)
 
       if (ruleDetails != null) {
@@ -41,7 +53,7 @@ export default {
         }
         // suppress any entries that are known to cascade from previous error types
         if (ruleDetails.cascadesFrom != null) {
-          for (type of ruleDetails.cascadesFrom) {
+          for (type of Array.from(ruleDetails.cascadesFrom)) {
             if (seenErrorTypes[type]) {
               entry.suppressed = true
             }
@@ -49,7 +61,7 @@ export default {
         }
         // record the types of errors seen
         if (ruleDetails.types != null) {
-          for (type of ruleDetails.types) {
+          for (type of Array.from(ruleDetails.types)) {
             seenErrorTypes[type] = true
           }
         }
@@ -57,12 +69,6 @@ export default {
         if (ruleDetails.humanReadableHint != null) {
           entry.humanReadableHint = ruleDetails.humanReadableHint
         }
-
-        if (ruleDetails.humanReadableHintComponent != null) {
-          entry.humanReadableHintComponent =
-            ruleDetails.humanReadableHintComponent
-        }
-
         if (ruleDetails.extraInfoURL != null) {
           entry.extraInfoURL = ruleDetails.extraInfoURL
         }

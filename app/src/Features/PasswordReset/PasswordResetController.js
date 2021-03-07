@@ -1,6 +1,7 @@
 const PasswordResetHandler = require('./PasswordResetHandler')
 const RateLimiter = require('../../infrastructure/RateLimiter')
 const AuthenticationController = require('../Authentication/AuthenticationController')
+const AuthenticationManager = require('../Authentication/AuthenticationManager')
 const UserGetter = require('../User/UserGetter')
 const UserUpdater = require('../User/UserUpdater')
 const UserSessionsManager = require('../User/UserSessionsManager')
@@ -14,6 +15,9 @@ async function setNewUserPassword(req, res, next) {
     return res.sendStatus(400)
   }
   passwordResetToken = passwordResetToken.trim()
+  if (AuthenticationManager.validatePassword(password) != null) {
+    return res.sendStatus(400)
+  }
   delete req.session.resetToken
 
   const initiatorId = AuthenticationController.getLoggedInUserId(req)

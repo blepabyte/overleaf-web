@@ -10,7 +10,7 @@
  */
 let trackOpenSockets
 const _ = require('underscore')
-const metrics = require('@overleaf/metrics')
+const metrics = require('metrics-sharelatex')
 ;(trackOpenSockets = function() {
   metrics.gauge(
     'http.open-sockets',

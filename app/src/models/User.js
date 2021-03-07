@@ -31,8 +31,7 @@ const UserSchema = new Schema({
       },
       confirmedAt: { type: Date },
       samlProviderId: { type: String },
-      affiliationUnchecked: { type: Boolean },
-      reconfirmedAt: { type: Date }
+      affiliationUnchecked: { type: Boolean }
     }
   ],
   first_name: { type: String, default: '' },
@@ -142,9 +141,8 @@ const UserSchema = new Schema({
   refered_users: [{ type: ObjectId, ref: 'User' }],
   refered_user_count: { type: Number, default: 0 },
   refProviders: {
-    // The actual values are managed by third-party-references.
-    mendeley: Schema.Types.Mixed,
-    zotero: Schema.Types.Mixed
+    mendeley: Boolean, // coerce the refProviders values to Booleans
+    zotero: Boolean
   },
   alphaProgram: { type: Boolean, default: false }, // experimental features
   betaProgram: { type: Boolean, default: false },

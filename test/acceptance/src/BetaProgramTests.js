@@ -19,11 +19,9 @@ describe('BetaProgram', function() {
     expect(response.statusCode).to.equal(302)
     response.statusCode.should.equal(302)
     expect(response.headers.location).to.equal('/beta/participate')
-    const user = (
-      await UserHelper.getUser({
-        email
-      })
-    ).user
+    const user = (await UserHelper.getUser({
+      email
+    })).user
     expect(user.betaProgram).to.equal(true)
   })
   it('should opt out', async function() {
@@ -33,11 +31,9 @@ describe('BetaProgram', function() {
     expect(response.statusCode).to.equal(302)
     response.statusCode.should.equal(302)
     expect(response.headers.location).to.equal('/beta/participate')
-    const user = (
-      await UserHelper.getUser({
-        email
-      })
-    ).user
+    const user = (await UserHelper.getUser({
+      email
+    })).user
     expect(user.betaProgram).to.equal(false)
   })
 })

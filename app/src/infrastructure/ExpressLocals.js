@@ -5,7 +5,6 @@ const _ = require('lodash')
 const Url = require('url')
 const Path = require('path')
 const moment = require('moment')
-const pug = require('pug-runtime')
 
 const IS_DEV_ENV = ['development', 'test'].includes(process.env.NODE_ENV)
 
@@ -13,7 +12,6 @@ const Features = require('./Features')
 const AuthenticationController = require('../Features/Authentication/AuthenticationController')
 const PackageVersions = require('./PackageVersions')
 const Modules = require('./Modules')
-const SafeHTMLSubstitute = require('../Features/Helpers/SafeHTMLSubstitution')
 
 let webpackManifest
 if (!IS_DEV_ENV) {
@@ -24,16 +22,9 @@ if (!IS_DEV_ENV) {
   webpackManifest = require(`../../../public/manifest.json`)
 }
 
-const I18N_HTML_INJECTIONS = new Set()
-
 module.exports = function(webRouter, privateApiRouter, publicApiRouter) {
   webRouter.use(function(req, res, next) {
     res.locals.session = req.session
-    next()
-  })
-
-  webRouter.use(function(req, res, next) {
-    res.locals.isIE = /\b(msie|trident)\b/i.test(req.headers['user-agent'])
     next()
   })
 
@@ -153,8 +144,12 @@ module.exports = function(webRouter, privateApiRouter, publicApiRouter) {
       }
     }
 
-    res.locals.buildCssPath = function(themeModifier = '') {
-      const cssFileName = `${themeModifier}style.css`
+    function _buildCssFileName(themeModifier) {
+      return `${Settings.brandPrefix}${themeModifier || ''}style.css`
+    }
+
+    res.locals.buildCssPath = function(themeModifier) {
+      const cssFileName = _buildCssFileName(themeModifier)
 
       let path
       if (IS_DEV_ENV) {
@@ -181,32 +176,10 @@ module.exports = function(webRouter, privateApiRouter, publicApiRouter) {
   })
 
   webRouter.use(function(req, res, next) {
-    res.locals.translate = function(key, vars, components) {
+    res.locals.translate = function(key, vars) {
       vars = vars || {}
-
-      if (Settings.i18n.checkForHTMLInVars) {
-        Object.entries(vars).forEach(([field, value]) => {
-          if (pug.escape(value) !== value) {
-            const violationsKey = key + field
-            // do not flood the logs, log one sample per pod + key + field
-            if (!I18N_HTML_INJECTIONS.has(violationsKey)) {
-              logger.warn(
-                { key, field, value },
-                'html content in translations context vars'
-              )
-              I18N_HTML_INJECTIONS.add(violationsKey)
-            }
-          }
-        })
-      }
-
       vars.appName = Settings.appName
-      const locale = req.i18n.translate(key, vars)
-      if (components) {
-        return SafeHTMLSubstitute.render(locale, components)
-      } else {
-        return locale
-      }
+      return req.i18n.translate(key, vars)
     }
     // Don't include the query string parameters, otherwise Google
     // treats ?nocdn=true as the canonical version
@@ -266,8 +239,7 @@ module.exports = function(webRouter, privateApiRouter, publicApiRouter) {
   })
 
   webRouter.use(function(req, res, next) {
-    res.locals.gaToken =
-      Settings.analytics && Settings.analytics.ga && Settings.analytics.ga.token
+    res.locals.gaToken = Settings.analytics && Settings.analytics.ga.token
     res.locals.gaOptimizeId = _.get(Settings, ['analytics', 'gaOptimize', 'id'])
     next()
   })
@@ -374,8 +346,7 @@ module.exports = function(webRouter, privateApiRouter, publicApiRouter) {
       sentryAllowedOriginRegex: Settings.sentry.allowedOriginRegex,
       sentryDsn: Settings.sentry.publicDSN,
       sentryEnvironment: Settings.sentry.environment,
-      sentryRelease: Settings.sentry.release,
-      enableSubscriptions: Settings.enableSubscriptions
+      sentryRelease: Settings.sentry.release
     }
     next()
   })

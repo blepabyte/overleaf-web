@@ -48,8 +48,6 @@ describe('ProjectUploadController', function() {
         console: console
       },
       requires: {
-        multer: sinon.stub(),
-        'settings-sharelatex': { path: {} },
         './ProjectUploadManager': (this.ProjectUploadManager = {}),
         './FileSystemImportManager': (this.FileSystemImportManager = {}),
         'logger-sharelatex': (this.logger = {
@@ -57,7 +55,7 @@ describe('ProjectUploadController', function() {
           error: sinon.stub(),
           err() {}
         }),
-        '@overleaf/metrics': this.metrics,
+        'metrics-sharelatex': this.metrics,
         '../Authentication/AuthenticationController': this
           .AuthenticationController,
         './ArchiveErrors': ArchiveErrors,

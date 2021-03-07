@@ -1,5 +1,5 @@
 /* eslint-disable
-    node/handle-callback-err,
+    handle-callback-err,
     max-len,
 */
 // TODO: This file was created by bulk-decaffeinate.
@@ -103,7 +103,7 @@ describe('Subscriptions', function() {
         MockRecurlyApi.mockSubscriptions = []
         MockRecurlyApi.coupons = {}
         MockRecurlyApi.redemptions = {}
-        Subscription.deleteOne(
+        Subscription.remove(
           {
             admin_id: this.user._id
           },
@@ -207,7 +207,7 @@ describe('Subscriptions', function() {
       })
 
       after(function(done) {
-        Subscription.deleteOne(
+        Subscription.remove(
           {
             admin_id: this.user._id
           },
@@ -277,7 +277,7 @@ describe('Subscriptions', function() {
       })
 
       after(function(done) {
-        Subscription.deleteOne(
+        Subscription.remove(
           {
             admin_id: this.owner1._id
           },
@@ -285,7 +285,7 @@ describe('Subscriptions', function() {
             if (error != null) {
               return done(error)
             }
-            return Subscription.deleteOne(
+            return Subscription.remove(
               {
                 admin_id: this.owner2._id
               },
@@ -349,7 +349,7 @@ describe('Subscriptions', function() {
       })
 
       after(function(done) {
-        Subscription.deleteOne(
+        Subscription.remove(
           {
             admin_id: this.owner1._id
           },
@@ -406,7 +406,7 @@ describe('Subscriptions', function() {
       })
 
       after(function(done) {
-        Institution.deleteOne(
+        Institution.remove(
           {
             v1Id: this.v1Id
           },
@@ -429,7 +429,7 @@ describe('Subscriptions', function() {
           subscription: {},
           subscription_status: {}
         })
-        MockV1Api.setAffiliations(this.user._id, [
+        MockV1Api.setAffiliations([
           {
             email: 'confirmed-affiliation-email@stanford.example.edu',
             licence: 'pro_plus',
@@ -516,7 +516,6 @@ describe('Subscriptions', function() {
             department: 'Math',
             role: 'Prof',
             inferred: false,
-            inReconfirmNotificationPeriod: false,
             institution: {
               name: 'Stanford',
               confirmed: true

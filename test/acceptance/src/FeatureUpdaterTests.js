@@ -1,5 +1,5 @@
 /* eslint-disable
-    node/handle-callback-err,
+    handle-callback-err,
     max-len,
     no-return-assign,
     no-unused-vars,
@@ -121,7 +121,7 @@ describe('FeatureUpdater.refreshFeatures', function() {
 
   describe('when the user has bonus features', function() {
     beforeEach(function() {
-      return User.updateOne(
+      return User.update(
         {
           _id: this.user._id
         },
@@ -162,7 +162,7 @@ describe('FeatureUpdater.refreshFeatures', function() {
     })
 
     it('should not set their features if email is not confirmed', function(done) {
-      MockV1Api.setAffiliations(this.user._id, [this.affiliationData])
+      MockV1Api.setAffiliations([this.affiliationData])
       return syncUserAndGetFeatures(this.user, (error, features) => {
         expect(features).to.deep.equal(settings.defaultFeatures)
         return done()
@@ -170,7 +170,7 @@ describe('FeatureUpdater.refreshFeatures', function() {
     })
 
     it('should set their features if email is confirmed', function(done) {
-      MockV1Api.setAffiliations(this.user._id, [this.affiliationData])
+      MockV1Api.setAffiliations([this.affiliationData])
       return this.user.confirmEmail(this.email, error => {
         return syncUserAndGetFeatures(this.user, (error, features) => {
           expect(features).to.deep.equal(this.institutionPlan.features)
@@ -181,7 +181,7 @@ describe('FeatureUpdater.refreshFeatures', function() {
 
     it('should not set their features if institution is not confirmed', function(done) {
       this.affiliationData.institution.confirmed = false
-      MockV1Api.setAffiliations(this.user._id, [this.affiliationData])
+      MockV1Api.setAffiliations([this.affiliationData])
       return this.user.confirmEmail(this.email, error => {
         return syncUserAndGetFeatures(this.user, (error, features) => {
           expect(features).to.deep.equal(settings.defaultFeatures)
@@ -193,7 +193,7 @@ describe('FeatureUpdater.refreshFeatures', function() {
 
   describe('when the user is due bonus features and has extra features that no longer apply', function() {
     beforeEach(function() {
-      return User.updateOne(
+      return User.update(
         {
           _id: this.user._id
         },
@@ -224,7 +224,7 @@ describe('FeatureUpdater.refreshFeatures', function() {
   describe('when the user has a v1 plan', function() {
     beforeEach(function() {
       MockV1Api.setUser(42, { plan_name: 'free' })
-      return User.updateOne(
+      return User.update(
         {
           _id: this.user._id
         },
@@ -251,7 +251,7 @@ describe('FeatureUpdater.refreshFeatures', function() {
   describe('when the user has a v1 plan and bonus features', function() {
     beforeEach(function() {
       MockV1Api.setUser(42, { plan_name: 'free' })
-      return User.updateOne(
+      return User.update(
         {
           _id: this.user._id
         },
@@ -327,7 +327,7 @@ describe('FeatureUpdater.refreshFeatures', function() {
 
   describe('when the notifyV1Flag is passed', function() {
     beforeEach(function() {
-      return User.updateOne(
+      return User.update(
         {
           _id: this.user._id
         },
@@ -344,7 +344,7 @@ describe('FeatureUpdater.refreshFeatures', function() {
     beforeEach(function() {
       const futureDate = new Date()
       futureDate.setDate(futureDate.getDate() + 1)
-      return User.updateOne(
+      return User.update(
         {
           _id: this.user._id
         },

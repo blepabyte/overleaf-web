@@ -1,5 +1,5 @@
 /* eslint-disable
-    node/handle-callback-err,
+    handle-callback-err,
     max-len,
     mocha/no-identical-title,
     no-return-assign,

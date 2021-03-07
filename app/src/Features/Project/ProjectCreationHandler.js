@@ -1,6 +1,6 @@
 /* eslint-disable
     camelcase,
-    node/handle-callback-err,
+    handle-callback-err,
     max-len,
     no-path-concat,
 */
@@ -15,7 +15,7 @@
 const logger = require('logger-sharelatex')
 const OError = require('@overleaf/o-error')
 const async = require('async')
-const metrics = require('@overleaf/metrics')
+const metrics = require('metrics-sharelatex')
 const Settings = require('settings-sharelatex')
 const { ObjectId } = require('mongodb')
 const { Project } = require('../../models/Project')
@@ -28,7 +28,7 @@ const fs = require('fs')
 const Path = require('path')
 const { promisify } = require('util')
 const _ = require('underscore')
-const AnalyticsManager = require('../Analytics/AnalyticsManager')
+const AnalyticsManger = require('../Analytics/AnalyticsManager')
 
 const ProjectCreationHandler = {
   createBlankProject(owner_id, projectName, attributes, callback) {
@@ -56,7 +56,7 @@ const ProjectCreationHandler = {
             if (error != null) {
               return callback(error)
             }
-            AnalyticsManager.recordEvent(owner_id, 'project-imported', {
+            AnalyticsManger.recordEvent(owner_id, 'project-imported', {
               projectId: project._id,
               attributes
             })
@@ -79,7 +79,7 @@ const ProjectCreationHandler = {
               if (error != null) {
                 return callback(error)
               }
-              AnalyticsManager.recordEvent(owner_id, 'project-created', {
+              AnalyticsManger.recordEvent(owner_id, 'project-created', {
                 projectId: project._id,
                 attributes
               })

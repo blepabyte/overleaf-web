@@ -33,7 +33,7 @@ describe('AuthenticationController', function() {
         '../User/UserUpdater': (this.UserUpdater = {
           updateUser: sinon.stub()
         }),
-        '@overleaf/metrics': (this.Metrics = { inc: sinon.stub() }),
+        'metrics-sharelatex': (this.Metrics = { inc: sinon.stub() }),
         '../Security/LoginRateLimiter': (this.LoginRateLimiter = {
           processLoginRequest: sinon.stub(),
           recordSuccessfulLogin: sinon.stub()
@@ -685,7 +685,7 @@ describe('AuthenticationController', function() {
 
     describe('with http auth', function() {
       beforeEach(function() {
-        this.req.headers.authorization = 'Mock Basic Auth'
+        this.req.headers['authorization'] = 'Mock Basic Auth'
         this.AuthenticationController.requireGlobalLogin(
           this.req,
           this.res,
@@ -898,10 +898,12 @@ describe('AuthenticationController', function() {
     })
 
     it("should update the user's login count and last logged in date", function() {
-      this.UserUpdater.updateUser.args[0][1].$set.lastLoggedIn.should.not.equal(
-        undefined
+      this.UserUpdater.updateUser.args[0][1]['$set'][
+        'lastLoggedIn'
+      ].should.not.equal(undefined)
+      this.UserUpdater.updateUser.args[0][1]['$inc']['loginCount'].should.equal(
+        1
       )
-      this.UserUpdater.updateUser.args[0][1].$inc.loginCount.should.equal(1)
     })
 
     it('should call the callback', function() {

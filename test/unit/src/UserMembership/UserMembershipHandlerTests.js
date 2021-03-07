@@ -1,5 +1,5 @@
 /* eslint-disable
-    node/handle-callback-err,
+    handle-callback-err,
     max-len,
     no-return-assign,
     no-unused-vars,
@@ -43,13 +43,13 @@ describe('UserMembershipHandler', function() {
       _id: 'mock-institution-id',
       v1Id: 123,
       managerIds: [ObjectId(), ObjectId(), ObjectId()],
-      updateOne: sinon.stub().yields(null)
+      update: sinon.stub().yields(null)
     }
     this.publisher = {
       _id: 'mock-publisher-id',
       slug: 'slug',
       managerIds: [ObjectId(), ObjectId()],
-      updateOne: sinon.stub().yields(null)
+      update: sinon.stub().yields(null)
     }
 
     this.UserMembershipViewModel = {
@@ -75,6 +75,7 @@ describe('UserMembershipHandler', function() {
         mongodb: { ObjectId },
         './UserMembershipViewModel': this.UserMembershipViewModel,
         '../User/UserGetter': this.UserGetter,
+        '../Errors/Errors': Errors,
         '../../models/Institution': {
           Institution: this.Institution
         },
@@ -227,7 +228,7 @@ describe('UserMembershipHandler', function() {
           EntityConfigs.institution,
           this.email,
           (error, user) => {
-            assertCalledWith(this.institution.updateOne, {
+            assertCalledWith(this.institution.update, {
               $addToSet: { managerIds: this.newUser._id }
             })
             return done()
@@ -257,8 +258,8 @@ describe('UserMembershipHandler', function() {
           EntityConfigs.institution,
           this.newUser._id,
           (error, user) => {
-            const { lastCall } = this.institution.updateOne
-            assertCalledWith(this.institution.updateOne, {
+            const { lastCall } = this.institution.update
+            assertCalledWith(this.institution.update, {
               $pull: { managerIds: this.newUser._id }
             })
             return done()

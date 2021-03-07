@@ -1,6 +1,6 @@
 /* eslint-disable
     camelcase,
-    node/handle-callback-err,
+    handle-callback-err,
     max-len,
     no-dupe-keys,
     no-unused-vars,
@@ -15,7 +15,7 @@
  */
 const logger = require('logger-sharelatex')
 const OError = require('@overleaf/o-error')
-const Metrics = require('@overleaf/metrics')
+const Metrics = require('metrics-sharelatex')
 const sanitize = require('sanitizer')
 const ProjectEntityUpdateHandler = require('../Project/ProjectEntityUpdateHandler')
 const ProjectOptionsHandler = require('../Project/ProjectOptionsHandler')
@@ -80,8 +80,7 @@ const EditorController = {
           'reciveNewDoc',
           folder_id,
           doc,
-          source,
-          user_id
+          source
         )
         return callback(err, doc)
       }
@@ -125,8 +124,7 @@ const EditorController = {
           folder_id,
           fileRef,
           source,
-          linkedFileData,
-          user_id
+          linkedFileData
         )
         return callback(err, fileRef)
       }
@@ -159,8 +157,7 @@ const EditorController = {
             'reciveNewDoc',
             folder_id,
             doc,
-            source,
-            user_id
+            source
           )
         }
         return callback(err, doc)
@@ -208,8 +205,7 @@ const EditorController = {
           folder_id,
           newFile,
           source,
-          linkedFileData,
-          user_id
+          linkedFileData
         )
         return callback(null, newFile)
       }
@@ -247,8 +243,7 @@ const EditorController = {
                 'reciveNewDoc',
                 lastFolder._id,
                 doc,
-                source,
-                user_id
+                source
               )
             }
             return callback()
@@ -300,8 +295,7 @@ const EditorController = {
               lastFolder._id,
               newFile,
               source,
-              linkedFileData,
-              user_id
+              linkedFileData
             )
             return callback()
           }
@@ -310,7 +304,7 @@ const EditorController = {
     )
   },
 
-  addFolder(project_id, folder_id, folderName, source, userId, callback) {
+  addFolder(project_id, folder_id, folderName, source, callback) {
     if (callback == null) {
       callback = function(error, folder) {}
     }
@@ -334,7 +328,6 @@ const EditorController = {
           project_id,
           folder_id,
           folder,
-          userId,
           function(err) {
             if (err != null) {
               return callback(err)
@@ -684,20 +677,13 @@ const EditorController = {
           project_id,
           folder.parentFolder_id,
           folder,
-          null,
           cb
         ),
       callback
     )
   },
 
-  _notifyProjectUsersOfNewFolder(
-    project_id,
-    folder_id,
-    folder,
-    userId,
-    callback
-  ) {
+  _notifyProjectUsersOfNewFolder(project_id, folder_id, folder, callback) {
     if (callback == null) {
       callback = function(error) {}
     }
@@ -705,8 +691,7 @@ const EditorController = {
       project_id,
       'reciveNewFolder',
       folder_id,
-      folder,
-      userId
+      folder
     )
     return callback()
   }

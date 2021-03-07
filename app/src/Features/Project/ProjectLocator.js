@@ -198,7 +198,11 @@ const ProjectLocator = {
       if (!found) {
         cb(
           new Error(
-            `not found project: ${project._id} search path: ${needlePath}, folder ${foldersList[level]} could not be found`
+            `not found project: ${
+              project._id
+            } search path: ${needlePath}, folder ${
+              foldersList[level]
+            } could not be found`
           )
         )
       }
@@ -238,7 +242,9 @@ const ProjectLocator = {
       } else {
         cb(
           new Error(
-            `not found project: ${project._id} search path: ${needlePath}, entity ${entityName} could not be found`
+            `not found project: ${
+              project._id
+            } search path: ${needlePath}, entity ${entityName} could not be found`
           )
         )
       }

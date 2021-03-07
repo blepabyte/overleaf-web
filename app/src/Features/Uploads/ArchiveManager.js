@@ -1,5 +1,5 @@
 /* eslint-disable
-    node/handle-callback-err,
+    handle-callback-err,
     max-len,
     no-return-assign,
 */
@@ -14,7 +14,7 @@
  */
 const logger = require('logger-sharelatex')
 const OError = require('@overleaf/o-error')
-const metrics = require('@overleaf/metrics')
+const metrics = require('metrics-sharelatex')
 const fs = require('fs')
 const Path = require('path')
 const fse = require('fs-extra')

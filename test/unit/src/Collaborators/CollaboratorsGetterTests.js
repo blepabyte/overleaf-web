@@ -55,6 +55,7 @@ describe('CollaboratorsGetter', function() {
         '../User/UserGetter': this.UserGetter,
         '../../models/Project': { Project },
         '../Project/ProjectGetter': this.ProjectGetter,
+        '../Errors/Errors': Errors,
         '../Project/ProjectEditorHandler': this.ProjectEditorHandler
       }
     })

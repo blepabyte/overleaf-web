@@ -1,5 +1,22 @@
+/* eslint-disable
+    camelcase,
+    handle-callback-err,
+    max-len,
+    no-undef,
+    no-unused-vars,
+*/
+// TODO: This file was created by bulk-decaffeinate.
+// Fix any style issues and re-enable lint.
+/*
+ * decaffeinate suggestions:
+ * DS102: Remove unnecessary code created because of implicit returns
+ * DS103: Rewrite code to no longer use __guard__
+ * DS207: Consider shorter variations of null checks
+ * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
+ */
 let HistoryController
 const OError = require('@overleaf/o-error')
+const _ = require('lodash')
 const async = require('async')
 const logger = require('logger-sharelatex')
 const request = require('request')
@@ -15,32 +32,45 @@ const { pipeline } = require('stream')
 
 module.exports = HistoryController = {
   selectHistoryApi(req, res, next) {
-    const { Project_id: projectId } = req.params
+    if (next == null) {
+      next = function(error) {}
+    }
+    const project_id = req.params != null ? req.params.Project_id : undefined
     // find out which type of history service this project uses
-    ProjectDetailsHandler.getDetails(projectId, function(err, project) {
-      if (err) {
+    return ProjectDetailsHandler.getDetails(project_id, function(err, project) {
+      if (err != null) {
         return next(err)
       }
-      const history = project.overleaf && project.overleaf.history
-      if (history && history.id && history.display) {
+      const history =
+        project.overleaf != null ? project.overleaf.history : undefined
+      if (
+        (history != null ? history.id : undefined) != null &&
+        (history != null ? history.display : undefined)
+      ) {
         req.useProjectHistory = true
       } else {
         req.useProjectHistory = false
       }
-      next()
+      return next()
     })
   },
 
   ensureProjectHistoryEnabled(req, res, next) {
-    if (req.useProjectHistory) {
-      next()
+    if (next == null) {
+      next = function(error) {}
+    }
+    if (req.useProjectHistory != null) {
+      return next()
     } else {
-      res.sendStatus(404)
+      return res.sendStatus(404)
     }
   },
 
   proxyToHistoryApi(req, res, next) {
-    const userId = AuthenticationController.getLoggedInUserId(req)
+    if (next == null) {
+      next = function(error) {}
+    }
+    const user_id = AuthenticationController.getLoggedInUserId(req)
     const url =
       HistoryController.buildHistoryServiceUrl(req.useProjectHistory) + req.url
 
@@ -48,38 +78,41 @@ module.exports = HistoryController = {
       url,
       method: req.method,
       headers: {
-        'X-User-Id': userId
+        'X-User-Id': user_id
       }
     })
     getReq.pipe(res)
-    getReq.on('error', function(err) {
-      logger.warn({ url, err }, 'history API error')
-      next(err)
+    return getReq.on('error', function(error) {
+      logger.warn({ url, err: error }, 'history API error')
+      return next(error)
     })
   },
 
   proxyToHistoryApiAndInjectUserDetails(req, res, next) {
-    const userId = AuthenticationController.getLoggedInUserId(req)
+    if (next == null) {
+      next = function(error) {}
+    }
+    const user_id = AuthenticationController.getLoggedInUserId(req)
     const url =
       HistoryController.buildHistoryServiceUrl(req.useProjectHistory) + req.url
-    HistoryController._makeRequest(
+    return HistoryController._makeRequest(
       {
         url,
         method: req.method,
         json: true,
         headers: {
-          'X-User-Id': userId
+          'X-User-Id': user_id
         }
       },
-      function(err, body) {
-        if (err) {
-          return next(err)
+      function(error, body) {
+        if (error != null) {
+          return next(error)
         }
-        HistoryManager.injectUserDetails(body, function(err, data) {
-          if (err) {
-            return next(err)
+        return HistoryManager.injectUserDetails(body, function(error, data) {
+          if (error != null) {
+            return next(error)
           }
-          res.json(data)
+          return res.json(data)
         })
       }
     )
@@ -96,32 +129,37 @@ module.exports = HistoryController = {
   },
 
   resyncProjectHistory(req, res, next) {
-    const projectId = req.params.Project_id
-    ProjectEntityUpdateHandler.resyncProjectHistory(projectId, function(err) {
-      if (err instanceof Errors.ProjectHistoryDisabledError) {
+    if (next == null) {
+      next = function(error) {}
+    }
+    const project_id = req.params.Project_id
+    return ProjectEntityUpdateHandler.resyncProjectHistory(project_id, function(
+      error
+    ) {
+      if (error instanceof Errors.ProjectHistoryDisabledError) {
         return res.sendStatus(404)
       }
-      if (err) {
-        return next(err)
+      if (error != null) {
+        return next(error)
       }
-      res.sendStatus(204)
+      return res.sendStatus(204)
     })
   },
 
   restoreFileFromV2(req, res, next) {
-    const { project_id: projectId } = req.params
+    const { project_id } = req.params
     const { version, pathname } = req.body
-    const userId = AuthenticationController.getLoggedInUserId(req)
-    RestoreManager.restoreFileFromV2(
-      userId,
-      projectId,
+    const user_id = AuthenticationController.getLoggedInUserId(req)
+    return RestoreManager.restoreFileFromV2(
+      user_id,
+      project_id,
       version,
       pathname,
-      function(err, entity) {
-        if (err) {
-          return next(err)
+      function(error, entity) {
+        if (error != null) {
+          return next(error)
         }
-        res.json({
+        return res.json({
           type: entity.type,
           id: entity._id
         })
@@ -130,19 +168,19 @@ module.exports = HistoryController = {
   },
 
   restoreDocFromDeletedDoc(req, res, next) {
-    const { project_id: projectId, doc_id: docId } = req.params
+    const { project_id, doc_id } = req.params
     const { name } = req.body
-    const userId = AuthenticationController.getLoggedInUserId(req)
+    const user_id = AuthenticationController.getLoggedInUserId(req)
     if (name == null) {
       return res.sendStatus(400) // Malformed request
     }
-    RestoreManager.restoreDocFromDeletedDoc(
-      userId,
-      projectId,
-      docId,
+    return RestoreManager.restoreDocFromDeletedDoc(
+      user_id,
+      project_id,
+      doc_id,
       name,
-      (err, doc) => {
-        if (err) return next(err)
+      (error, doc) => {
+        if (error != null) return next(error)
         res.json({
           doc_id: doc._id
         })
@@ -151,46 +189,51 @@ module.exports = HistoryController = {
   },
 
   getLabels(req, res, next) {
-    const projectId = req.params.Project_id
-    HistoryController._makeRequest(
+    const project_id = req.params.Project_id
+    const user_id = AuthenticationController.getLoggedInUserId(req)
+    return HistoryController._makeRequest(
       {
         method: 'GET',
-        url: `${settings.apis.project_history.url}/project/${projectId}/labels`,
+        url: `${
+          settings.apis.project_history.url
+        }/project/${project_id}/labels`,
         json: true
       },
-      function(err, labels) {
-        if (err) {
-          return next(err)
+      function(error, labels) {
+        if (error != null) {
+          return next(error)
         }
         HistoryController._enrichLabels(labels, (err, labels) => {
           if (err) {
             return next(err)
           }
-          res.json(labels)
+          return res.json(labels)
         })
       }
     )
   },
 
   createLabel(req, res, next) {
-    const projectId = req.params.Project_id
+    const project_id = req.params.Project_id
     const { comment, version } = req.body
-    const userId = AuthenticationController.getLoggedInUserId(req)
-    HistoryController._makeRequest(
+    const user_id = AuthenticationController.getLoggedInUserId(req)
+    return HistoryController._makeRequest(
       {
         method: 'POST',
-        url: `${settings.apis.project_history.url}/project/${projectId}/user/${userId}/labels`,
+        url: `${
+          settings.apis.project_history.url
+        }/project/${project_id}/user/${user_id}/labels`,
         json: { comment, version }
       },
-      function(err, label) {
-        if (err) {
-          return next(err)
+      function(error, label) {
+        if (error != null) {
+          return next(error)
         }
         HistoryController._enrichLabel(label, (err, label) => {
           if (err) {
             return next(err)
           }
-          res.json(label)
+          return res.json(label)
         })
       }
     )
@@ -250,7 +293,7 @@ module.exports = HistoryController = {
     if (user == null) {
       return 'Anonymous'
     }
-    if (user.name) {
+    if (user.name != null) {
       return user.name
     }
     let name = [user.first_name, user.last_name]
@@ -260,64 +303,67 @@ module.exports = HistoryController = {
     if (name === '') {
       name = user.email.split('@')[0]
     }
-    if (!name) {
+    if (name == null || name === '') {
       return '?'
     }
     return name
   },
 
   deleteLabel(req, res, next) {
-    const { Project_id: projectId, label_id: labelId } = req.params
-    const userId = AuthenticationController.getLoggedInUserId(req)
-    HistoryController._makeRequest(
+    const project_id = req.params.Project_id
+    const { label_id } = req.params
+    const user_id = AuthenticationController.getLoggedInUserId(req)
+    return HistoryController._makeRequest(
       {
         method: 'DELETE',
-        url: `${settings.apis.project_history.url}/project/${projectId}/user/${userId}/labels/${labelId}`
+        url: `${
+          settings.apis.project_history.url
+        }/project/${project_id}/user/${user_id}/labels/${label_id}`
       },
-      function(err) {
-        if (err) {
-          return next(err)
+      function(error) {
+        if (error != null) {
+          return next(error)
         }
-        res.sendStatus(204)
+        return res.sendStatus(204)
       }
     )
   },
 
   _makeRequest(options, callback) {
-    return request(options, function(err, response, body) {
-      if (err) {
-        return callback(err)
+    return request(options, function(error, response, body) {
+      if (error != null) {
+        return callback(error)
       }
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        callback(null, body)
+        return callback(null, body)
       } else {
-        err = new Error(
+        error = new Error(
           `history api responded with non-success code: ${response.statusCode}`
         )
-        callback(err)
+        return callback(error)
       }
     })
   },
 
   downloadZipOfVersion(req, res, next) {
-    const { project_id: projectId, version } = req.params
-    ProjectDetailsHandler.getDetails(projectId, function(err, project) {
-      if (err) {
+    const { project_id, version } = req.params
+    return ProjectDetailsHandler.getDetails(project_id, function(err, project) {
+      if (err != null) {
         return next(err)
       }
-      const v1Id =
-        project.overleaf &&
-        project.overleaf.history &&
-        project.overleaf.history.id
-      if (v1Id == null) {
-        logger.error(
-          { projectId, version },
+      const v1_id = __guard__(
+        project.overleaf != null ? project.overleaf.history : undefined,
+        x => x.id
+      )
+      if (v1_id == null) {
+        logger.err(
+          { project_id, version },
           'got request for zip version of non-v1 history project'
         )
         return res.sendStatus(402)
       }
-      HistoryController._pipeHistoryZipToResponse(
-        v1Id,
+      return HistoryController._pipeHistoryZipToResponse(
+        v1_id,
         version,
         `${project.name} (Version ${version})`,
         req,
@@ -327,14 +373,16 @@ module.exports = HistoryController = {
     })
   },
 
-  _pipeHistoryZipToResponse(v1ProjectId, version, name, req, res, next) {
+  _pipeHistoryZipToResponse(v1_project_id, version, name, req, res, next) {
     if (req.aborted) {
       // client has disconnected -- skip project history api call and download
       return
     }
     // increase timeout to 6 minutes
     res.setTimeout(6 * 60 * 1000)
-    const url = `${settings.apis.v1_history.url}/projects/${v1ProjectId}/version/${version}/zip`
+    const url = `${
+      settings.apis.v1_history.url
+    }/projects/${v1_project_id}/version/${version}/zip`
     const options = {
       auth: {
         user: settings.apis.v1_history.user,
@@ -344,10 +392,10 @@ module.exports = HistoryController = {
       method: 'post',
       url
     }
-    request(options, function(err, response, body) {
+    return request(options, function(err, response, body) {
       if (err) {
         OError.tag(err, 'history API error', {
-          v1ProjectId,
+          v1_project_id,
           version
         })
         return next(err)
@@ -359,7 +407,7 @@ module.exports = HistoryController = {
       let retryAttempt = 0
       let retryDelay = 2000
       // retry for about 6 minutes starting with short delay
-      async.retry(
+      return async.retry(
         40,
         callback =>
           setTimeout(function() {
@@ -400,33 +448,39 @@ module.exports = HistoryController = {
               pipeline(response, res, err => {
                 if (err) {
                   logger.warn(
-                    { err, v1ProjectId, version, retryAttempt },
+                    { err, v1_project_id, version, retryAttempt },
                     'history s3 proxying error'
                   )
                 }
               })
               callback()
             })
-            getReq.on('error', function(err) {
+            return getReq.on('error', function(err) {
               logger.warn(
-                { err, v1ProjectId, version, retryAttempt },
+                { err, v1_project_id, version, retryAttempt },
                 'history s3 download error'
               )
               cleanupAbortTrigger()
-              callback(err)
+              return callback(err)
             })
           }, retryDelay),
         function(err) {
           if (err) {
             OError.tag(err, 'history s3 download failed', {
-              v1ProjectId,
+              v1_project_id,
               version,
               retryAttempt
             })
-            next(err)
+            return next(err)
           }
         }
       )
     })
   }
+}
+
+function __guard__(value, transform) {
+  return typeof value !== 'undefined' && value !== null
+    ? transform(value)
+    : undefined
 }

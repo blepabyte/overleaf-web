@@ -1,5 +1,5 @@
 const logger = require('logger-sharelatex')
-const metrics = require('@overleaf/metrics')
+const metrics = require('metrics-sharelatex')
 const settings = require('settings-sharelatex')
 const request = require('request')
 const { promisifyAll } = require('../../util/promises')
@@ -207,7 +207,9 @@ var makeAffiliationRequest = function(requestOptions, callback) {
         if (body && body.errors) {
           errorMessage = `${response.statusCode}: ${body.errors}`
         } else {
-          errorMessage = `${requestOptions.defaultErrorMessage}: ${response.statusCode}`
+          errorMessage = `${requestOptions.defaultErrorMessage}: ${
+            response.statusCode
+          }`
         }
 
         logger.warn(

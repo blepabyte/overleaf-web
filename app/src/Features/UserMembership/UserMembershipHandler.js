@@ -1,7 +1,8 @@
 /* eslint-disable
-    node/handle-callback-err,
+    handle-callback-err,
     max-len,
     no-unused-vars,
+    standard/no-callback-literal,
 */
 // TODO: This file was created by bulk-decaffeinate.
 // Fix any style issues and re-enable lint.
@@ -113,7 +114,7 @@ var addUserToEntity = function(entity, attribute, user, callback) {
   }
   const fieldUpdate = {}
   fieldUpdate[attribute] = user._id
-  return entity.updateOne({ $addToSet: fieldUpdate }, callback)
+  return entity.update({ $addToSet: fieldUpdate }, callback)
 }
 
 var removeUserFromEntity = function(entity, attribute, userId, callback) {
@@ -122,7 +123,7 @@ var removeUserFromEntity = function(entity, attribute, userId, callback) {
   }
   const fieldUpdate = {}
   fieldUpdate[attribute] = userId
-  return entity.updateOne({ $pull: fieldUpdate }, callback)
+  return entity.update({ $pull: fieldUpdate }, callback)
 }
 
 var buildEntityQuery = function(entityId, entityConfig, loggedInUser) {

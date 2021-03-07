@@ -8,7 +8,6 @@ describe('ClsiManager', function() {
   beforeEach(function() {
     this.jar = { cookie: 'stuff' }
     this.ClsiCookieManager = {
-      clearServerId: sinon.stub().yields(),
       getCookieJar: sinon.stub().callsArgWith(1, null, this.jar),
       setServerId: sinon.stub().callsArgWith(2),
       _getServerId: sinon.stub()
@@ -71,7 +70,7 @@ describe('ClsiManager', function() {
         'logger-sharelatex': this.logger,
         request: this.request,
         './ClsiFormatChecker': this.ClsiFormatChecker,
-        '@overleaf/metrics': this.Metrics
+        'metrics-sharelatex': this.Metrics
       }
     })
     this.project_id = 'project-id'
@@ -94,13 +93,17 @@ describe('ClsiManager', function() {
             status: (this.status = 'success'),
             outputFiles: [
               {
-                url: `${this.settings.apis.clsi.url}/project/${this.project_id}/user/${this.user_id}/build/1234/output/output.pdf`,
+                url: `${this.settings.apis.clsi.url}/project/${
+                  this.project_id
+                }/user/${this.user_id}/build/1234/output/output.pdf`,
                 path: 'output.pdf',
                 type: 'pdf',
                 build: 1234
               },
               {
-                url: `${this.settings.apis.clsi.url}/project/${this.project_id}/user/${this.user_id}/build/1234/output/output.log`,
+                url: `${this.settings.apis.clsi.url}/project/${
+                  this.project_id
+                }/user/${this.user_id}/build/1234/output/output.log`,
                 path: 'output.log',
                 type: 'log',
                 build: 1234
@@ -131,13 +134,17 @@ describe('ClsiManager', function() {
       it('should call the callback with the status and output files', function() {
         const outputFiles = [
           {
-            url: `/project/${this.project_id}/user/${this.user_id}/build/1234/output/output.pdf`,
+            url: `/project/${this.project_id}/user/${
+              this.user_id
+            }/build/1234/output/output.pdf`,
             path: 'output.pdf',
             type: 'pdf',
             build: 1234
           },
           {
-            url: `/project/${this.project_id}/user/${this.user_id}/build/1234/output/output.log`,
+            url: `/project/${this.project_id}/user/${
+              this.user_id
+            }/build/1234/output/output.log`,
             path: 'output.log',
             type: 'log',
             build: 1234
@@ -293,13 +300,17 @@ describe('ClsiManager', function() {
             status: (this.status = 'success'),
             outputFiles: [
               {
-                url: `${this.settings.apis.clsi.url}/project/${this.submission_id}/build/1234/output/output.pdf`,
+                url: `${this.settings.apis.clsi.url}/project/${
+                  this.submission_id
+                }/build/1234/output/output.pdf`,
                 path: 'output.pdf',
                 type: 'pdf',
                 build: 1234
               },
               {
-                url: `${this.settings.apis.clsi.url}/project/${this.submission_id}/build/1234/output/output.log`,
+                url: `${this.settings.apis.clsi.url}/project/${
+                  this.submission_id
+                }/build/1234/output/output.log`,
                 path: 'output.log',
                 type: 'log',
                 build: 1234
@@ -392,7 +403,7 @@ describe('ClsiManager', function() {
 
   describe('deleteAuxFiles', function() {
     beforeEach(function() {
-      this.ClsiManager._makeRequestWithClsiServerId = sinon.stub().yields(null)
+      this.ClsiManager._makeRequest = sinon.stub().callsArg(2)
       this.DocumentUpdaterHandler.clearProjectState = sinon.stub().callsArg(1)
     })
 
@@ -402,32 +413,23 @@ describe('ClsiManager', function() {
           this.project_id,
           this.user_id,
           { compileGroup: 'standard' },
-          'node-1',
           this.callback
         )
       })
 
       it('should call the delete method in the standard CLSI', function() {
-        this.ClsiManager._makeRequestWithClsiServerId
-          .calledWith(
-            this.project_id,
-            {
-              method: 'DELETE',
-              url: `${this.settings.apis.clsi.url}/project/${this.project_id}/user/${this.user_id}`
-            },
-            'node-1'
-          )
+        this.ClsiManager._makeRequest
+          .calledWith(this.project_id, {
+            method: 'DELETE',
+            url: `${this.settings.apis.clsi.url}/project/${
+              this.project_id
+            }/user/${this.user_id}`
+          })
           .should.equal(true)
       })
 
       it('should clear the project state from the docupdater', function() {
         this.DocumentUpdaterHandler.clearProjectState
-          .calledWith(this.project_id)
-          .should.equal(true)
-      })
-
-      it('should clear the clsi persistance', function() {
-        this.ClsiCookieManager.clearServerId
           .calledWith(this.project_id)
           .should.equal(true)
       })
@@ -552,7 +554,9 @@ describe('ClsiManager', function() {
               },
               {
                 path: 'images/image.png',
-                url: `${this.settings.apis.filestore.url}/project/${this.project_id}/file/${this.file_1._id}`,
+                url: `${this.settings.apis.filestore.url}/project/${
+                  this.project_id
+                }/file/${this.file_1._id}`,
                 modified: this.file_1.created.getTime()
               }
             ]
@@ -858,7 +862,9 @@ describe('ClsiManager', function() {
       })
 
       it('should send the request to the CLSI', function() {
-        const url = `${this.settings.apis.clsi.url}/project/${this.project_id}/user/${this.user_id}/compile`
+        const url = `${this.settings.apis.clsi.url}/project/${
+          this.project_id
+        }/user/${this.user_id}/compile`
         this.ClsiManager._makeRequest
           .calledWith(this.project_id, {
             method: 'POST',
@@ -900,9 +906,14 @@ describe('ClsiManager', function() {
 
   describe('wordCount', function() {
     beforeEach(function() {
-      this.ClsiManager._makeRequestWithClsiServerId = sinon
+      this.ClsiManager._makeRequest = sinon
         .stub()
-        .yields(null, { statusCode: 200 }, (this.body = { mock: 'foo' }))
+        .callsArgWith(
+          2,
+          null,
+          { statusCode: 200 },
+          (this.body = { mock: 'foo' })
+        )
       this.ClsiManager._buildRequest = sinon.stub().callsArgWith(
         2,
         null,
@@ -919,25 +930,19 @@ describe('ClsiManager', function() {
           this.user_id,
           false,
           {},
-          'node-1',
           this.callback
         )
       })
 
       it('should call wordCount with root file', function() {
-        this.ClsiManager._makeRequestWithClsiServerId
-          .calledWith(
-            this.project_id,
-            {
-              method: 'GET',
-              url: `http://clsi.example.com/project/${this.project_id}/user/${this.user_id}/wordcount`,
-              qs: {
-                file: 'rootfile.text',
-                image: undefined
-              }
-            },
-            'node-1'
-          )
+        this.ClsiManager._makeRequest
+          .calledWith(this.project_id, {
+            method: 'GET',
+            url: `http://clsi.example.com/project/${this.project_id}/user/${
+              this.user_id
+            }/wordcount`,
+            qs: { file: 'rootfile.text', image: undefined }
+          })
           .should.equal(true)
       })
 
@@ -953,22 +958,19 @@ describe('ClsiManager', function() {
           this.user_id,
           'main.tex',
           {},
-          'node-2',
           this.callback
         )
       })
 
       it('should call wordCount with param file', function() {
-        this.ClsiManager._makeRequestWithClsiServerId
-          .calledWith(
-            this.project_id,
-            {
-              method: 'GET',
-              url: `http://clsi.example.com/project/${this.project_id}/user/${this.user_id}/wordcount`,
-              qs: { file: 'main.tex', image: undefined }
-            },
-            'node-2'
-          )
+        this.ClsiManager._makeRequest
+          .calledWith(this.project_id, {
+            method: 'GET',
+            url: `http://clsi.example.com/project/${this.project_id}/user/${
+              this.user_id
+            }/wordcount`,
+            qs: { file: 'main.tex', image: undefined }
+          })
           .should.equal(true)
       })
     })
@@ -982,22 +984,19 @@ describe('ClsiManager', function() {
           this.user_id,
           'main.tex',
           {},
-          'node-3',
           this.callback
         )
       })
 
       it('should call wordCount with file and image', function() {
-        this.ClsiManager._makeRequestWithClsiServerId
-          .calledWith(
-            this.project_id,
-            {
-              method: 'GET',
-              url: `http://clsi.example.com/project/${this.project_id}/user/${this.user_id}/wordcount`,
-              qs: { file: 'main.tex', image: this.image }
-            },
-            'node-3'
-          )
+        this.ClsiManager._makeRequest
+          .calledWith(this.project_id, {
+            method: 'GET',
+            url: `http://clsi.example.com/project/${this.project_id}/user/${
+              this.user_id
+            }/wordcount`,
+            qs: { file: 'main.tex', image: this.image }
+          })
           .should.equal(true)
       })
     })
@@ -1029,83 +1028,6 @@ describe('ClsiManager', function() {
           .calledWith(this.project_id, this.response)
           .should.equal(true)
         done()
-      })
-    })
-  })
-
-  describe('_makeRequestWithClsiServerId', function() {
-    beforeEach(function() {
-      this.response = { statusCode: 200 }
-      this.request.yields(null, this.response)
-      this.opts = {
-        method: 'GET',
-        url: 'http://clsi'
-      }
-    })
-
-    describe('with a regular request', function() {
-      it('should process a request with a cookie jar', function(done) {
-        this.ClsiManager._makeRequestWithClsiServerId(
-          this.project_id,
-          this.opts,
-          undefined,
-          err => {
-            if (err) return done(err)
-            const args = this.request.args[0]
-            args[0].method.should.equal(this.opts.method)
-            args[0].url.should.equal(this.opts.url)
-            args[0].jar.should.equal(this.jar)
-            expect(args[0].qs).to.not.exist
-            done()
-          }
-        )
-      })
-
-      it('should persist the cookie from the response', function(done) {
-        this.ClsiManager._makeRequestWithClsiServerId(
-          this.project_id,
-          this.opts,
-          undefined,
-          err => {
-            if (err) return done(err)
-            this.ClsiCookieManager.setServerId
-              .calledWith(this.project_id, this.response)
-              .should.equal(true)
-            done()
-          }
-        )
-      })
-    })
-
-    describe('with a persistent request', function() {
-      it('should not add a cookie jar', function(done) {
-        this.ClsiManager._makeRequestWithClsiServerId(
-          this.project_id,
-          this.opts,
-          'node-1',
-          err => {
-            if (err) return done(err)
-            const requestOpts = this.request.args[0][0]
-            expect(requestOpts.method).to.equal(this.opts.method)
-            expect(requestOpts.url).to.equal(this.opts.url)
-            expect(requestOpts.jar).to.not.exist
-            expect(requestOpts.qs).to.deep.equal({ clsiserverid: 'node-1' })
-            done()
-          }
-        )
-      })
-
-      it('should not persist a cookie on response', function(done) {
-        this.ClsiManager._makeRequestWithClsiServerId(
-          this.project_id,
-          this.opts,
-          'node-1',
-          err => {
-            if (err) return done(err)
-            expect(this.ClsiCookieManager.setServerId.called).to.equal(false)
-            done()
-          }
-        )
       })
     })
   })

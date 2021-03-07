@@ -1,5 +1,5 @@
 /* eslint-disable
-    node/handle-callback-err,
+    handle-callback-err,
     max-len,
     new-cap,
     no-return-assign,
@@ -19,7 +19,6 @@
  */
 import App from '../../../base'
 import PDFJS from './pdfJsLoader'
-import { captureMessage } from '../../../infrastructure/error-reporter'
 
 export default App.factory('PDFRenderer', function(
   $timeout,
@@ -337,10 +336,11 @@ export default App.factory('PDFRenderer', function(
           if (loadTask.cancelled) {
             return
           } // return from cancelled page load
-          captureMessage(
-            `pdfng page load timed out after ${this.PAGE_LOAD_TIMEOUT}ms`
+          __guardMethod__(window.Raven, 'captureMessage', o =>
+            o.captureMessage(
+              `pdfng page load timed out after ${this.PAGE_LOAD_TIMEOUT}ms`
+            )
           )
-
           timedOut = true
           this.clearIndicator(page)
           // @jobs = @jobs - 1
@@ -479,13 +479,15 @@ export default App.factory('PDFRenderer', function(
                   ? self.errorCallback(error)
                   : undefined
             )
-            return page.getAnnotations().then(
-              annotations => annotationsLayer.setAnnotations(annotations),
-              error =>
-                typeof self.errorCallback === 'function'
-                  ? self.errorCallback(error)
-                  : undefined
-            )
+            return page
+              .getAnnotations()
+              .then(
+                annotations => annotationsLayer.setAnnotations(annotations),
+                error =>
+                  typeof self.errorCallback === 'function'
+                    ? self.errorCallback(error)
+                    : undefined
+              )
           })
           .catch(function(error) {
             // page render failed

@@ -1,25 +1,24 @@
 import React, { useState, useEffect } from 'react'
 import PropTypes from 'prop-types'
+import { OverlayTrigger, Tooltip } from 'react-bootstrap'
 import classNames from 'classnames'
-import { useTranslation } from 'react-i18next'
+import { useTranslation, Trans } from 'react-i18next'
 
 import OutlineRoot from './outline-root'
 import Icon from '../../../shared/components/icon'
 import localStorage from '../../../infrastructure/local-storage'
 import withErrorBoundary from '../../../infrastructure/error-boundary'
-import { useEditorContext } from '../../../shared/context/editor-context'
 
 function OutlinePane({
   isTexFile,
   outline,
+  projectId,
   jumpToLine,
   onToggle,
   eventTracking,
   highlightedLine
 }) {
   const { t } = useTranslation()
-
-  const { projectId } = useEditorContext()
 
   const storageKey = `file_outline.expanded.${projectId}`
   const [expanded, setExpanded] = useState(() => {
@@ -28,9 +27,12 @@ function OutlinePane({
   })
   const isOpen = isTexFile && expanded
 
-  useEffect(() => {
-    onToggle(isOpen)
-  }, [isOpen, onToggle])
+  useEffect(
+    () => {
+      onToggle(isOpen)
+    },
+    [isOpen]
+  )
 
   const headerClasses = classNames('outline-pane', {
     'outline-pane-disabled': !isTexFile
@@ -43,6 +45,17 @@ function OutlinePane({
       setExpanded(!expanded)
     }
   }
+
+  const infoContent = (
+    <>
+      <Trans
+        i18nKey="the_file_outline_is_a_new_feature_click_the_icon_to_learn_more"
+        components={[<strong />]}
+      />
+      .
+    </>
+  )
+  const tooltip = <Tooltip id="outline-info-tooltip">{infoContent}</Tooltip>
 
   return (
     <div className={headerClasses}>
@@ -58,6 +71,19 @@ function OutlinePane({
             classes={{ icon: 'outline-caret-icon' }}
           />
           <h4 className="outline-header-name">{t('file_outline')}</h4>
+          {expanded ? (
+            <OverlayTrigger placement="top" overlay={tooltip} delayHide={100}>
+              <a
+                href="/learn/how-to/Using_the_File_Outline_in_Overleaf"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="outline-header-info-badge"
+                onClick={ev => ev.stopPropagation()}
+              >
+                <span className="sr-only">{infoContent}</span>
+              </a>
+            </OverlayTrigger>
+          ) : null}
         </button>
       </header>
       {expanded && isTexFile ? (
@@ -76,6 +102,7 @@ function OutlinePane({
 OutlinePane.propTypes = {
   isTexFile: PropTypes.bool.isRequired,
   outline: PropTypes.array.isRequired,
+  projectId: PropTypes.string.isRequired,
   jumpToLine: PropTypes.func.isRequired,
   onToggle: PropTypes.func.isRequired,
   eventTracking: PropTypes.object.isRequired,

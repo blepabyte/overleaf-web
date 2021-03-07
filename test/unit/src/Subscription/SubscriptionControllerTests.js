@@ -122,6 +122,7 @@ describe('SubscriptionController', function() {
         '../Errors/HttpErrorHandler': (this.HttpErrorHandler = {
           unprocessableEntity: sinon.stub()
         }),
+        '../Errors/Errors': Errors,
         './Errors': SubscriptionErrors
       }
     })

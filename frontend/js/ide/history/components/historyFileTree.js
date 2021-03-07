@@ -1,5 +1,6 @@
 import _ from 'lodash'
-
+/* eslint-disable
+*/
 // TODO: This file was created by bulk-decaffeinate.
 // Fix any style issues and re-enable lint.
 /*

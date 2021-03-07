@@ -5,19 +5,18 @@ import PreviewRecompileButton from '../../../../../frontend/js/features/preview/
 const { expect } = require('chai')
 
 describe('<PreviewRecompileButton />', function() {
-  let onRecompile, onRecompileFromScratch, onStopCompilation
+  let onRecompile, onClearCache
 
   beforeEach(function() {
     onRecompile = sinon.stub().resolves()
-    onRecompileFromScratch = sinon.stub().resolves()
-    onStopCompilation = sinon.stub().resolves()
+    onClearCache = sinon.stub().resolves()
   })
 
   it('renders all items', function() {
     renderPreviewRecompileButton()
 
     const menuItems = screen.getAllByRole('menuitem')
-    expect(menuItems.length).to.equal(9)
+    expect(menuItems.length).to.equal(8)
     expect(menuItems.map(item => item.textContent)).to.deep.equal([
       'On',
       'Off',
@@ -26,7 +25,6 @@ describe('<PreviewRecompileButton />', function() {
       'Check syntax before compile',
       "Don't check syntax",
       'Run syntax check now',
-      'Stop compilation',
       'Recompile from scratch'
     ])
 
@@ -41,17 +39,39 @@ describe('<PreviewRecompileButton />', function() {
 
   describe('Recompile from scratch', function() {
     describe('click', function() {
-      it('should call onRecompileFromScratch', async function() {
+      it('should call onClearCache and onRecompile', async function() {
         renderPreviewRecompileButton()
 
         const button = screen.getByRole('menuitem', {
           name: 'Recompile from scratch'
         })
         await fireEvent.click(button)
-        expect(onRecompileFromScratch).to.have.been.calledOnce
+        expect(onClearCache).to.have.been.calledOnce
+        expect(onRecompile).to.have.been.calledOnce
       })
     })
     describe('processing', function() {
+      it('shows processing view and disable menuItem when clearing cache', function() {
+        renderPreviewRecompileButton({ isClearingCache: true })
+
+        screen.getByRole('button', { name: 'Compiling …' })
+        expect(
+          screen
+            .getByRole('menuitem', {
+              name: 'Recompile from scratch'
+            })
+            .getAttribute('aria-disabled')
+        ).to.equal('true')
+        expect(
+          screen
+            .getByRole('menuitem', {
+              name: 'Recompile from scratch'
+            })
+            .closest('li')
+            .getAttribute('class')
+        ).to.equal('disabled')
+      })
+
       it('shows processing view and disable menuItem when recompiling', function() {
         renderPreviewRecompileButton({ isCompiling: true })
 
@@ -75,24 +95,7 @@ describe('<PreviewRecompileButton />', function() {
     })
   })
 
-  it('should show the button text when prop showText=true', function() {
-    const showText = true
-    renderPreviewRecompileButton({}, showText)
-    expect(screen.getByText('Recompile').getAttribute('style')).to.be.null
-  })
-  it('should not show the button text when prop showText=false', function() {
-    const showText = false
-    renderPreviewRecompileButton({}, showText)
-    expect(screen.getByText('Recompile').getAttribute('style')).to.equal(
-      'position: absolute; right: -100vw;'
-    )
-  })
-
-  function renderPreviewRecompileButton(compilerState = {}, showText) {
-    if (!compilerState.logEntries) {
-      compilerState.logEntries = {}
-    }
-    if (showText === undefined) showText = true
+  function renderPreviewRecompileButton(compilerState = {}) {
     render(
       <PreviewRecompileButton
         compilerState={{
@@ -108,9 +111,7 @@ describe('<PreviewRecompileButton />', function() {
         onSetAutoCompile={() => {}}
         onSetDraftMode={() => {}}
         onSetSyntaxCheck={() => {}}
-        onRecompileFromScratch={onRecompileFromScratch}
-        onStopCompilation={onStopCompilation}
-        showText={showText}
+        onClearCache={onClearCache}
       />
     )
   }

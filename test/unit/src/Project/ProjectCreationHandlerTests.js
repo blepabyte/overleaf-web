@@ -77,7 +77,7 @@ describe('ProjectCreationHandler', function() {
         'settings-sharelatex': this.Settings,
         '../Analytics/AnalyticsManager': this.AnalyticsManager,
         'logger-sharelatex': { log() {} },
-        '@overleaf/metrics': {
+        'metrics-sharelatex': {
           inc() {},
           timeAsyncMethod() {}
         }

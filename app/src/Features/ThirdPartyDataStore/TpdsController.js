@@ -1,6 +1,6 @@
 /* eslint-disable
    camelcase,
-   node/handle-callback-err,
+   handle-callback-err,
    max-len,
  */
 // TODO: This file was created by bulk-decaffeinate.
@@ -15,10 +15,9 @@ let parseParams
 
 const tpdsUpdateHandler = require('./TpdsUpdateHandler')
 const UpdateMerger = require('./UpdateMerger')
-const Errors = require('../Errors/Errors')
 const logger = require('logger-sharelatex')
 const Path = require('path')
-const metrics = require('@overleaf/metrics')
+const metrics = require('metrics-sharelatex')
 const NotificationsBuilder = require('../Notifications/NotificationsBuilder')
 const AuthenticationController = require('../Authentication/AuthenticationController')
 const TpdsQueueManager = require('./TpdsQueueManager').promises
@@ -115,11 +114,7 @@ module.exports = {
       source,
       function(error) {
         if (error != null) {
-          if (error.constructor === Errors.InvalidNameError) {
-            return res.sendStatus(422)
-          } else {
-            return next(error)
-          }
+          return next(error)
         }
         return res.sendStatus(200)
       }

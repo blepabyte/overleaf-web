@@ -1,6 +1,6 @@
 /* eslint-disable
     camelcase,
-    node/handle-callback-err,
+    handle-callback-err,
     max-len,
     no-undef,
 */

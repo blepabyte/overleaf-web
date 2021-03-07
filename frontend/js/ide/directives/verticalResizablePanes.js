@@ -41,7 +41,6 @@ export default App.directive('verticalResizablePanes', localStorage => ({
     }
 
     const toggledExternally = attrs.verticalResizablePanesToggledExternallyOn
-    const resizeOn = attrs.verticalResizablePanesResizeOn
     const resizerDisabledClass = `${layoutOptions.south.resizerClass}-disabled`
 
     function enableResizer() {
@@ -79,12 +78,6 @@ export default App.directive('verticalResizablePanes', localStorage => ({
           disableResizer()
         }
         layoutHandle.sizePane('south', newSize)
-      })
-    }
-
-    if (resizeOn) {
-      scope.$on(resizeOn, () => {
-        layoutHandle.resizeAll()
       })
     }
 

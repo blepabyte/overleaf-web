@@ -93,7 +93,8 @@ class TrackChangesManager {
   }
 
   onChangeScroll() {
-    if (this._scrollTimeout == null) {
+    if (this._scrollTimeout != null) {
+    } else {
       return (this._scrollTimeout = setTimeout(() => {
         this.recalculateVisibleEntries()
         this.$scope.$apply()

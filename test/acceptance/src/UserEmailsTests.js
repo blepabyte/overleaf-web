@@ -1,10 +1,7 @@
 const { expect } = require('chai')
 const async = require('async')
-const moment = require('moment')
-const Features = require('../../../app/src/infrastructure/Features')
 const User = require('./helpers/User')
 const UserHelper = require('./helpers/UserHelper')
-const UserUpdater = require('../../../app/src/Features/User/UserUpdater')
 const { db, ObjectId } = require('../../../app/src/infrastructure/mongodb')
 const MockV1Api = require('./helpers/MockV1Api')
 const expectErrorResponse = require('./helpers/expectErrorResponse')
@@ -44,9 +41,7 @@ describe('UserEmails', function() {
                 expect(error).to.not.exist
                 expect(response.statusCode).to.equal(200)
                 expect(body[0].confirmedAt).to.not.exist
-                expect(body[0].reconfirmedAt).to.not.exist
                 expect(body[1].confirmedAt).to.not.exist
-                expect(body[1].reconfirmedAt).to.not.exist
                 cb()
               }
             )
@@ -93,10 +88,7 @@ describe('UserEmails', function() {
                 expect(error).to.not.exist
                 expect(response.statusCode).to.equal(200)
                 expect(body[0].confirmedAt).to.not.exist
-                expect(body[0].reconfirmedAt).to.not.exist
                 expect(body[1].confirmedAt).to.exist
-                expect(body[1].reconfirmedAt).to.exist
-                expect(body[1].reconfirmedAt).to.deep.equal(body[1].confirmedAt)
                 cb()
               }
             )
@@ -244,37 +236,6 @@ describe('UserEmails', function() {
         ],
         done
       )
-    })
-  })
-
-  describe('reconfirm an email', function() {
-    let email, userHelper, confirmedAtDate
-    beforeEach(async function() {
-      userHelper = new UserHelper()
-      email = userHelper.getDefaultEmail()
-      userHelper = await UserHelper.createUser({ email })
-      userHelper = await UserHelper.loginUser({
-        email,
-        password: userHelper.getDefaultPassword()
-      })
-      // original confirmation
-      await userHelper.confirmEmail(userHelper.user._id, email)
-      const user = (await UserHelper.getUser({ email })).user
-      confirmedAtDate = user.emails[0].confirmedAt
-      expect(user.emails[0].confirmedAt).to.exist
-      expect(user.emails[0].reconfirmedAt).to.exist
-    })
-    it('should set reconfirmedAt and not reset confirmedAt', async function() {
-      await userHelper.confirmEmail(userHelper.user._id, email)
-      const user = (await UserHelper.getUser({ email })).user
-      expect(user.emails[0].confirmedAt).to.exist
-      expect(user.emails[0].reconfirmedAt).to.exist
-      expect(user.emails[0].confirmedAt).to.deep.equal(confirmedAtDate)
-      expect(user.emails[0].reconfirmedAt).to.not.deep.equal(
-        user.emails[0].confirmedAt
-      )
-      expect(user.emails[0].reconfirmedAt > user.emails[0].confirmedAt).to.be
-        .true
     })
   })
 
@@ -827,12 +788,10 @@ describe('UserEmails', function() {
           uri: '/user/emails'
         })
         expect(response.statusCode).to.equal(204)
-        const token = (
-          await db.tokens.findOne({
-            'data.user_id': userId.toString(),
-            'data.email': otherEmail
-          })
-        ).token
+        const token = (await db.tokens.findOne({
+          'data.user_id': userId.toString(),
+          'data.email': otherEmail
+        })).token
         response = await userHelper.request.post(`/user/emails/confirm`, {
           form: {
             token
@@ -859,81 +818,6 @@ describe('UserEmails', function() {
           newPrimaryEmail: otherEmail,
           oldPrimaryEmail: originalEmail
         })
-      })
-    })
-
-    describe('session cleanup', function() {
-      beforeEach(function setupSecondSession(done) {
-        this.userSession2 = new User()
-        this.userSession2.email = this.user.email
-        this.userSession2.emails = this.user.emails
-        this.userSession2.password = this.user.password
-        // login before adding the new email address
-        // User.login() performs a mongo update and resets the .emails field.
-        this.userSession2.login(done)
-      })
-
-      beforeEach(function checkSecondSessionLiveness(done) {
-        this.userSession2.request(
-          { method: 'GET', url: '/project', followRedirect: false },
-          (error, response) => {
-            expect(error).to.not.exist
-            expect(response.statusCode).to.equal(200)
-            done()
-          }
-        )
-      })
-
-      beforeEach(function addSecondaryEmail(done) {
-        this.user.request(
-          {
-            method: 'POST',
-            url: '/user/emails',
-            json: { email: 'new-confirmed-default@example.com' }
-          },
-          (error, response) => {
-            expect(error).to.not.exist
-            expect(response.statusCode).to.equal(204)
-            done()
-          }
-        )
-      })
-
-      beforeEach(function confirmSecondaryEmail(done) {
-        db.users.updateOne(
-          { 'emails.email': 'new-confirmed-default@example.com' },
-          { $set: { 'emails.$.confirmedAt': new Date() } },
-          done
-        )
-      })
-
-      beforeEach(function setDefault(done) {
-        this.user.request(
-          {
-            method: 'POST',
-            url: '/user/emails/default',
-            json: { email: 'new-confirmed-default@example.com' }
-          },
-          (error, response) => {
-            expect(error).to.not.exist
-            expect(response.statusCode).to.equal(200)
-            done()
-          }
-        )
-      })
-
-      it('should logout the other sessions', function(done) {
-        this.userSession2.request(
-          { method: 'GET', url: '/project', followRedirect: false },
-          (error, response) => {
-            expect(error).to.not.exist
-            expect(response.statusCode).to.equal(302)
-            expect(response.headers)
-              .to.have.property('location')
-              .to.match(new RegExp('^/login'))
-            done()
-          }
-        )
       })
     })
   })
@@ -992,161 +876,6 @@ describe('UserEmails', function() {
       expect(user.auditLog[0].initiatorId).to.deep.equal(user._id)
       expect(user.auditLog[0].info.newSecondaryEmail).to.equal(newEmail)
       expect(user.auditLog[0].ip).to.equal(this.user.request.ip)
-    })
-  })
-
-  describe('notification period', function() {
-    let defaultEmail, userHelper, email1, email2, email3
-    const maxConfirmationMonths = 12
-
-    beforeEach(async function() {
-      if (!Features.hasFeature('affiliations')) {
-        this.skip()
-      }
-      userHelper = new UserHelper()
-      defaultEmail = userHelper.getDefaultEmail()
-      userHelper = await UserHelper.createUser({ email: defaultEmail })
-      userHelper = await UserHelper.loginUser({
-        email: defaultEmail,
-        password: userHelper.getDefaultPassword()
-      })
-      const institutionId = MockV1Api.createInstitution({
-        ssoEnabled: false,
-        maxConfirmationMonths
-      })
-      const domain = 'example-affiliation.com'
-      MockV1Api.addInstitutionDomain(institutionId, domain)
-
-      email1 = `leonard@${domain}`
-      email2 = `mccoy@${domain}`
-      email3 = `bones@${domain}`
-    })
-
-    describe('non SSO affiliations', function() {
-      beforeEach(async function() {
-        // create a user with 3 affiliations at the institution.
-        // all are within in the notification period
-        const backdatedDays = maxConfirmationMonths * 2 * 30
-        const userId = userHelper.user._id
-        await userHelper.addEmailAndConfirm(userId, email1)
-        await userHelper.addEmailAndConfirm(userId, email2)
-        await userHelper.addEmailAndConfirm(userId, email3)
-        await userHelper.backdateConfirmation(userId, email1, backdatedDays)
-        await userHelper.backdateConfirmation(userId, email2, backdatedDays)
-        await userHelper.backdateConfirmation(userId, email3, backdatedDays)
-      })
-
-      it('should flag inReconfirmNotificationPeriod for all affiliations in period', async function() {
-        const response = await userHelper.request.get('/user/emails')
-        expect(response.statusCode).to.equal(200)
-        const fullEmails = JSON.parse(response.body)
-        expect(fullEmails.length).to.equal(4)
-        expect(fullEmails[0].affiliation).to.not.exist
-        expect(
-          fullEmails[1].affiliation.inReconfirmNotificationPeriod
-        ).to.equal(true)
-        expect(
-          fullEmails[2].affiliation.inReconfirmNotificationPeriod
-        ).to.equal(true)
-        expect(
-          fullEmails[3].affiliation.inReconfirmNotificationPeriod
-        ).to.equal(true)
-      })
-
-      describe('should flag emails before their confirmation expires, but within the notification period', function() {
-        beforeEach(async function() {
-          const dateInPeriodButNotExpired = moment()
-            .subtract(maxConfirmationMonths, 'months')
-            .add(14, 'days')
-            .toDate()
-          const backdatedDays = moment().diff(dateInPeriodButNotExpired, 'days')
-          await userHelper.backdateConfirmation(
-            userHelper.user._id,
-            email1,
-            backdatedDays
-          )
-          await userHelper.backdateConfirmation(
-            userHelper.user._id,
-            email2,
-            backdatedDays
-          )
-          await userHelper.backdateConfirmation(
-            userHelper.user._id,
-            email3,
-            backdatedDays
-          )
-        })
-
-        it('should flag the emails', async function() {
-          const response = await userHelper.request.get('/user/emails')
-          expect(response.statusCode).to.equal(200)
-          const fullEmails = JSON.parse(response.body)
-          expect(fullEmails.length).to.equal(4)
-          expect(fullEmails[0].affiliation).to.not.exist
-          expect(
-            fullEmails[1].affiliation.inReconfirmNotificationPeriod
-          ).to.equal(true)
-          expect(
-            fullEmails[2].affiliation.inReconfirmNotificationPeriod
-          ).to.equal(true)
-          expect(
-            fullEmails[3].affiliation.inReconfirmNotificationPeriod
-          ).to.equal(true)
-          // ensure dates are not past reconfirmation period
-          function _getLastDayToReconfirm(date) {
-            return moment(date).add(maxConfirmationMonths, 'months')
-          }
-
-          expect(
-            moment(fullEmails[1].reconfirmedAt).isAfter(
-              _getLastDayToReconfirm(fullEmails[1].reconfirmedAt)
-            )
-          ).to.equal(false)
-
-          expect(
-            moment(fullEmails[2].reconfirmedAt).isAfter(
-              _getLastDayToReconfirm(fullEmails[2].reconfirmedAt)
-            )
-          ).to.equal(false)
-          expect(
-            moment(fullEmails[3].reconfirmedAt).isAfter(
-              _getLastDayToReconfirm(fullEmails[3].reconfirmedAt)
-            )
-          ).to.equal(false)
-        })
-      })
-
-      describe('missing reconfirmedAt', function() {
-        beforeEach(async function() {
-          const userId = userHelper.user._id
-          const query = {
-            _id: userId,
-            'emails.email': email2
-          }
-          const update = {
-            $unset: { 'emails.$.reconfirmedAt': true }
-          }
-          await UserUpdater.promises.updateUser(query, update)
-        })
-
-        it('should fallback to confirmedAt for date check', async function() {
-          const response = await userHelper.request.get('/user/emails')
-          expect(response.statusCode).to.equal(200)
-          const fullEmails = JSON.parse(response.body)
-          expect(fullEmails.length).to.equal(4)
-          expect(fullEmails[0].affiliation).to.not.exist
-          expect(fullEmails[2].reconfirmedAt).to.not.exist
-          expect(
-            fullEmails[1].affiliation.inReconfirmNotificationPeriod
-          ).to.equal(true)
-          expect(
-            fullEmails[2].affiliation.inReconfirmNotificationPeriod
-          ).to.equal(true)
-          expect(
-            fullEmails[3].affiliation.inReconfirmNotificationPeriod
-          ).to.equal(true)
-        })
-      })
     })
   })
 })

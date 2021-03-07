@@ -61,34 +61,17 @@ async function resyncProject(projectId) {
       url: `${settings.apis.project_history.url}/project/${projectId}/resync`
     })
   } catch (err) {
-    throw OError.tag(err, 'failed to resync project history', { projectId })
+    throw new OError('failed to resync project history', { projectId })
   }
 }
 
-async function deleteProject(projectId, historyId) {
+async function deleteProject(projectId) {
   try {
-    const tasks = [
-      request.delete(
-        `${settings.apis.project_history.url}/project/${projectId}`
-      )
-    ]
-    if (historyId != null) {
-      tasks.push(
-        request.delete({
-          url: `${settings.apis.v1_history.url}/projects/${historyId}`,
-          auth: {
-            user: settings.apis.v1_history.user,
-            pass: settings.apis.v1_history.pass
-          }
-        })
-      )
-    }
-    await Promise.all(tasks)
+    await request.delete(
+      `${settings.apis.project_history.url}/project/${projectId}`
+    )
   } catch (err) {
-    throw OError.tag(err, 'failed to clear project history', {
-      projectId,
-      historyId
-    })
+    throw new OError('failed to clear project history', { projectId })
   }
 }
 
@@ -123,8 +106,8 @@ async function injectUserDetails(data) {
   const entries = Array.isArray(data.diff)
     ? data.diff
     : Array.isArray(data.updates)
-    ? data.updates
-    : []
+      ? data.updates
+      : []
   for (const entry of entries) {
     for (const user of (entry.meta && entry.meta.users) || []) {
       if (typeof user === 'string') {

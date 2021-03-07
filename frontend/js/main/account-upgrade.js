@@ -1,49 +1,59 @@
-function startFreeTrial(source, version, $scope, eventTracking) {
-  const plan = 'collaborator_free_trial_7_days'
+import App from '../base'
 
-  const w = window.open()
-  const go = function() {
-    let url
-    if (typeof ga === 'function') {
-      ga('send', 'event', 'subscription-funnel', 'upgraded-free-trial', source)
-    }
-    url = `/user/subscription/new?planCode=${plan}&ssp=true`
-    url = `${url}&itm_campaign=${source}`
-    if (version) {
-      url = `${url}&itm_content=${version}`
-    }
+export default App.controller('FreeTrialModalController', function(
+  $scope,
+  eventTracking
+) {
+  $scope.buttonClass = 'btn-primary'
 
-    if ($scope) {
+  $scope.startFreeTrial = function(source, version) {
+    const plan = 'collaborator_free_trial_7_days'
+
+    const w = window.open()
+    const go = function() {
+      let url
+      if (typeof ga === 'function') {
+        ga(
+          'send',
+          'event',
+          'subscription-funnel',
+          'upgraded-free-trial',
+          source
+        )
+      }
+      url = `/user/subscription/new?planCode=${plan}&ssp=true`
+      url = `${url}&itm_campaign=${source}`
+      if (version) {
+        url = `${url}&itm_content=${version}`
+      }
+
       $scope.startedFreeTrial = true
-    }
 
-    if (eventTracking) {
       eventTracking.sendMB('subscription-start-trial', { source, plan })
+
+      w.location = url
     }
 
-    w.location = url
+    go()
   }
+})
 
-  go()
-}
+App.controller('UpgradeModalController', function($scope, eventTracking) {
+  $scope.buttonClass = 'btn-primary'
 
-function upgradePlan(source, $scope) {
-  const w = window.open()
-  const go = function() {
-    let url
-    if (typeof ga === 'function') {
-      ga('send', 'event', 'subscription-funnel', 'upgraded-plan', source)
-    }
-    url = '/user/subscription'
-
-    if ($scope) {
+  $scope.upgradePlan = function(source) {
+    const w = window.open()
+    const go = function() {
+      let url
+      if (typeof ga === 'function') {
+        ga('send', 'event', 'subscription-funnel', 'upgraded-plan', source)
+      }
+      url = '/user/subscription'
       $scope.startedFreeTrial = true
+
+      w.location = url
     }
 
-    w.location = url
+    go()
   }
-
-  go()
-}
-
-export { startFreeTrial, upgradePlan }
+})

@@ -83,7 +83,11 @@ attemptInvoicesCollection(error => {
     throw error
   }
   console.log(
-    `DONE (DRY_RUN=${DRY_RUN}). ${INVOICES_COLLECTED.length} invoices collection attempts for ${USERS_COLLECTED.length} users. ${INVOICES_COLLECTED_SUCCESS.length} successful collections`
+    `DONE (DRY_RUN=${DRY_RUN}). ${
+      INVOICES_COLLECTED.length
+    } invoices collection attempts for ${USERS_COLLECTED.length} users. ${
+      INVOICES_COLLECTED_SUCCESS.length
+    } successful collections`
   )
   console.dir(
     {

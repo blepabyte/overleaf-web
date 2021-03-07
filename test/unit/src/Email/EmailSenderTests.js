@@ -38,7 +38,6 @@ describe('EmailSender', function() {
       },
       requires: {
         nodemailer: this.ses,
-        'nodemailer-ses-transport': sinon.stub(),
         'nodemailer-mandrill-transport': {},
         'settings-sharelatex': this.Settings,
         '../../infrastructure/RateLimiter': this.RateLimiter,
@@ -47,7 +46,7 @@ describe('EmailSender', function() {
           warn() {},
           err() {}
         },
-        '@overleaf/metrics': {
+        'metrics-sharelatex': {
           inc() {}
         }
       }

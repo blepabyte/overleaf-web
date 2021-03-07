@@ -2,13 +2,17 @@ const sinon = require('sinon')
 const chai = require('chai')
 const { expect } = chai
 const SandboxedModule = require('sandboxed-module')
-const Errors = require('../../../../app/src/Features/Errors/Errors')
 const modulePath = '../../../../app/src/Features/User/SAMLIdentityManager.js'
 
 describe('SAMLIdentityManager', function() {
   const linkedEmail = 'another@example.com'
 
   beforeEach(function() {
+    this.Errors = {
+      EmailExistsError: sinon.stub(),
+      NotFoundError: sinon.stub(),
+      SAMLIdentityExistsError: sinon.stub()
+    }
     this.userId = 'user-id-1'
     this.user = {
       _id: this.userId,
@@ -74,7 +78,7 @@ describe('SAMLIdentityManager', function() {
             findOne: sinon.stub().returns({
               exec: sinon.stub().resolves()
             }),
-            updateOne: sinon.stub().returns({
+            update: sinon.stub().returns({
               exec: sinon.stub().resolves()
             })
           })
@@ -162,7 +166,7 @@ describe('SAMLIdentityManager', function() {
           } catch (e) {
             error = e
           } finally {
-            expect(error).to.be.instanceof(Errors.EmailExistsError)
+            expect(error).to.be.instanceof(this.Errors.EmailExistsError)
             expect(this.User.findOneAndUpdate).to.not.have.been.called
           }
         })
@@ -193,7 +197,7 @@ describe('SAMLIdentityManager', function() {
           } catch (e) {
             error = e
           } finally {
-            expect(error).to.be.instanceof(Errors.SAMLIdentityExistsError)
+            expect(error).to.be.instanceof(this.Errors.SAMLIdentityExistsError)
             expect(this.User.findOneAndUpdate).to.not.have.been.called
           }
         })
@@ -222,7 +226,7 @@ describe('SAMLIdentityManager', function() {
           expect(error).to.exist
           expect(error).to.equal(anError)
           expect(this.EmailHandler.sendEmail).to.not.have.been.called
-          expect(this.User.updateOne).to.not.have.been.called
+          expect(this.User.update).to.not.have.been.called
         }
       })
     })
@@ -271,7 +275,7 @@ describe('SAMLIdentityManager', function() {
             ipAddress: '0:0:0:0'
           },
           () => {
-            expect(this.User.updateOne).to.have.been.called
+            expect(this.User.update).to.have.been.called
             expect(this.EmailHandler.sendEmail).to.have.been.calledOnce
             const emailArgs = this.EmailHandler.sendEmail.lastCall.args
             expect(emailArgs[0]).to.equal('securityAlert')
@@ -328,7 +332,7 @@ describe('SAMLIdentityManager', function() {
           }
         }
       }
-      expect(this.User.updateOne).to.have.been.calledOnce.and.calledWithMatch(
+      expect(this.User.update).to.have.been.calledOnce.and.calledWithMatch(
         query,
         update
       )
@@ -342,7 +346,7 @@ describe('SAMLIdentityManager', function() {
         'Overleaf University',
         this.auditLog
       )
-      expect(this.User.updateOne).to.have.been.called
+      expect(this.User.update).to.have.been.called
       expect(this.EmailHandler.sendEmail).to.have.been.calledOnce
       const emailArgs = this.EmailHandler.sendEmail.lastCall.args
       expect(emailArgs[0]).to.equal('securityAlert')
@@ -372,7 +376,7 @@ describe('SAMLIdentityManager', function() {
           expect(error).to.exist
           expect(error).to.equal(anError)
           expect(this.EmailHandler.sendEmail).to.not.have.been.called
-          expect(this.User.updateOne).to.not.have.been.called
+          expect(this.User.update).to.not.have.been.called
         }
       })
     })

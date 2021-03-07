@@ -1,8 +1,6 @@
 include ../../_mixins/saml
 
 .user-notifications(ng-controller="NotificationsController")
-	include ./unsupported-browser
-
 	ul.list-unstyled(
 		ng-if="notifications.length > 0 && projects.length > 0",
 		ng-cloak
@@ -51,40 +49,17 @@ include ../../_mixins/saml
 							span.sr-only #{translate("close")}
 				.alert.alert-info(
 					ng-switch-when="notification_ip_matched_affiliation"
-					ng-if="notification.messageOpts.ssoEnabled"
 				)
 					.notification-body
-						| !{translate("looks_like_youre_at", {institutionName: '{{notification.messageOpts.university_name}}'}, ['strong'])}
-						br
-						| !{translate("you_can_now_log_in_sso", {}, ['strong'])}
-						br
-						| #{translate("link_institutional_email_get_started", {}, ['strong'])}&nbsp;
-						a(
-							ng-href="{{notification.messageOpts.portalPath || 'https://www.overleaf.com/learn/how-to/Institutional_Login'}}"
-						) #{translate("find_out_more_nt")}
+						| It looks like you're at&nbsp;
+						strong {{ notification.messageOpts.university_name }}! <br/>
+						|	Did you know that {{notification.messageOpts.university_name}} is providing
+						strong  free Overleaf Professional accounts
+						|	 to everyone at {{notification.messageOpts.university_name}}? <br/>
+						|	Add an institutional email address to claim your account.
 					.notification-action
-						a.pull-right.btn.btn-sm.btn-info(
-							href=`{{samlInitPath}}?university_id={{notification.messageOpts.institutionId}}`
-						)
-							| #{translate("link_account")}
-					.notification-close
-						button.btn-sm(ng-click="dismiss(notification)").close.pull-right
-							span(aria-hidden="true") &times;
-							span.sr-only #{translate("close")}
-				.alert.alert-info(
-					ng-switch-when="notification_ip_matched_affiliation"
-					ng-if="!notification.messageOpts.ssoEnabled"
-				)
-					.notification-body
-						| !{translate("looks_like_youre_at", {institutionName: '{{notification.messageOpts.university_name}}'}, ['strong'])}
-						br
-						| !{translate("did_you_know_institution_providing_professional", {institutionName: '{{notification.messageOpts.university_name}}'}, ['strong'])}
-						br
-						| #{translate("add_email_to_claim_features")}
-					.notification-action
-						a.pull-right.btn.btn-sm.btn-info(
-							href="/user/settings"
-						) #{translate("add_affiliation")}
+						a.pull-right.btn.btn-sm.btn-info(href="/user/settings")
+							| Add Affiliation
 					.notification-close
 						button.btn-sm(ng-click="dismiss(notification)").close.pull-right
 							span(aria-hidden="true") &times;
@@ -199,22 +174,19 @@ include ../../_mixins/saml
 			ng-repeat="userEmail in userEmails",
 			ng-if="showConfirmEmail(userEmail) && projects.length > 0"
 		)
-			.alert.alert-warning
+			.alert.alert-warning(ng-if="!userEmail.confirmationInflight")
 				.notification-body
-					div(ng-if="!userEmail.confirmationInflight")
-						| #{translate("please_confirm_email", {emailAddress: "{{ userEmail.email }}"})}
-						|
-						a(
-							href
-							ng-click="resendConfirmationEmail(userEmail)"
-						) (#{translate('resend_confirmation_email')})
-					div(ng-if="userEmail.confirmationInflight")
-						i.fa.fa-spinner.fa-spin(aria-hidden="true")
-						|
-						| #{translate('resending_confirmation_email')}&hellip;
-					div(ng-if="!userEmail.confirmationInflight && userEmail.error" aria-live="polite")
-						| #{translate('generic_something_went_wrong')}
-
+					| #{translate("please_confirm_email", {emailAddress: "{{ userEmail.email }}"})}
+					|
+					a(
+						href
+						ng-click="resendConfirmationEmail(userEmail)"
+					) (#{translate('resend_confirmation_email')})
+			.alert.alert-warning(ng-if="userEmail.confirmationInflight")
+				.notification-body
+					i.fa.fa-spinner.fa-spin(aria-hidden="true")
+					|
+					| #{translate('resending_confirmation_email')}&hellip;
 	- var hasPaidAffiliation = userAffiliations.some(affiliation => affiliation.licence && affiliation.licence !== 'free')
 	if settings.enableSubscriptions && !hasSubscription && !hasPaidAffiliation
 		ul.list-unstyled(

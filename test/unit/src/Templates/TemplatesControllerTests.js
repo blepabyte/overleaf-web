@@ -14,7 +14,6 @@ const SandboxedModule = require('sandboxed-module')
 const assert = require('assert')
 const chai = require('chai')
 const sinon = require('sinon')
-const ProjectHelper = require('../../../../app/src/Features/Project/ProjectHelper')
 
 chai.should()
 const { expect } = chai
@@ -29,7 +28,6 @@ describe('TemplatesController', function() {
         console: console
       },
       requires: {
-        '../Project/ProjectHelper': ProjectHelper,
         '../Authentication/AuthenticationController': (this.AuthenticationController = {
           getLoggedInUserId: sinon.stub().returns(this.user_id)
         }),

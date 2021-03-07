@@ -1,6 +1,6 @@
 /* eslint-disable
     camelcase,
-    node/handle-callback-err,
+    handle-callback-err,
     max-len,
     no-unused-vars,
 */
@@ -26,7 +26,9 @@ const DocstoreManager = {
     if (callback == null) {
       callback = function(error) {}
     }
-    const url = `${settings.apis.docstore.url}/project/${project_id}/doc/${doc_id}`
+    const url = `${
+      settings.apis.docstore.url
+    }/project/${project_id}/doc/${doc_id}`
     return request.del({ url: url, timeout: TIMEOUT }, function(
       error,
       res,
@@ -126,7 +128,9 @@ const DocstoreManager = {
       callback = options
       options = {}
     }
-    let url = `${settings.apis.docstore.url}/project/${project_id}/doc/${doc_id}`
+    let url = `${
+      settings.apis.docstore.url
+    }/project/${project_id}/doc/${doc_id}`
     if (options.include_deleted) {
       url += '?include_deleted=true'
     }
@@ -173,7 +177,9 @@ const DocstoreManager = {
     if (callback == null) {
       callback = function(error, modified, rev) {}
     }
-    const url = `${settings.apis.docstore.url}/project/${project_id}/doc/${doc_id}`
+    const url = `${
+      settings.apis.docstore.url
+    }/project/${project_id}/doc/${doc_id}`
     return request.post(
       {
         url,

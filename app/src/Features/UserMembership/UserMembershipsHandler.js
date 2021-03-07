@@ -1,5 +1,5 @@
 /* eslint-disable
-    node/handle-callback-err,
+    handle-callback-err,
     max-len,
 */
 // TODO: This file was created by bulk-decaffeinate.
@@ -51,7 +51,7 @@ const UserMembershipsHandler = {
       callback = function(error) {}
     }
     const removeOperation = { $pull: {} }
-    removeOperation.$pull[entityConfig.fields.write] = userId
+    removeOperation['$pull'][entityConfig.fields.write] = userId
     return EntityModels[entityConfig.modelName].updateMany(
       {},
       removeOperation,

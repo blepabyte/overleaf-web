@@ -31,7 +31,6 @@ describe('ProjectHistoryHandler', function() {
         static initClass() {
           this.prototype.rootFolder = [this.rootFolder]
         }
-
         constructor(options) {
           this._id = project_id
           this.name = 'project_name_here'
@@ -84,9 +83,7 @@ describe('ProjectHistoryHandler', function() {
           .stub()
           .withArgs(project_id)
           .callsArgWith(1, null, this.project)
-        this.ProjectModel.updateOne = sinon
-          .stub()
-          .callsArgWith(2, null, { n: 1 })
+        this.ProjectModel.update = sinon.stub().callsArgWith(2, null, { n: 1 })
         return this.ProjectHistoryHandler.ensureHistoryExistsForProject(
           project_id,
           this.callback
@@ -104,7 +101,7 @@ describe('ProjectHistoryHandler', function() {
       })
 
       it('should set the new history id on the project', function() {
-        return this.ProjectModel.updateOne
+        return this.ProjectModel.update
           .calledWith(
             { _id: project_id, 'overleaf.history.id': { $exists: false } },
             { 'overleaf.history.id': this.newHistoryId }
@@ -136,7 +133,7 @@ describe('ProjectHistoryHandler', function() {
           .stub()
           .withArgs(project_id)
           .callsArgWith(1, null, this.project)
-        this.ProjectModel.updateOne = sinon.stub()
+        this.ProjectModel.update = sinon.stub()
         return this.ProjectHistoryHandler.ensureHistoryExistsForProject(
           project_id,
           this.callback
@@ -154,7 +151,7 @@ describe('ProjectHistoryHandler', function() {
       })
 
       it('should not set the new history id on the project', function() {
-        return this.ProjectModel.updateOne.called.should.equal(false)
+        return this.ProjectModel.update.called.should.equal(false)
       })
 
       it('should not resync the project history', function() {

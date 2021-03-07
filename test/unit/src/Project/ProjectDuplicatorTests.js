@@ -159,7 +159,6 @@ describe('ProjectDuplicator', function() {
       }
     }
     this.ProjectEntityUpdateHandler = {
-      isPathValidForRootDoc: sinon.stub().returns(true),
       promises: {
         setRootDoc: sinon.stub().resolves()
       }
@@ -328,22 +327,6 @@ describe('ProjectDuplicator', function() {
         element: null,
         path: null
       })
-      this.newProject = await this.ProjectDuplicator.promises.duplicate(
-        this.owner,
-        this.project._id,
-        'Copy of project'
-      )
-    })
-
-    it('should not set the root doc on the copy', function() {
-      this.ProjectEntityUpdateHandler.promises.setRootDoc.should.not.have.been
-        .called
-    })
-  })
-
-  describe('with an invalid root doc', function() {
-    beforeEach(async function() {
-      this.ProjectEntityUpdateHandler.isPathValidForRootDoc.returns(false)
       this.newProject = await this.ProjectDuplicator.promises.duplicate(
         this.owner,
         this.project._id,

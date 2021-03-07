@@ -48,7 +48,7 @@ describe('TpdsController', function() {
           info() {},
           err() {}
         },
-        '@overleaf/metrics': {
+        'metrics-sharelatex': {
           inc() {}
         }
       }

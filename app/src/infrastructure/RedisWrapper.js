@@ -1,5 +1,5 @@
 const Settings = require('settings-sharelatex')
-const redis = require('@overleaf/redis-wrapper')
+const redis = require('redis-sharelatex')
 
 if (
   typeof global.beforeEach === 'function' &&

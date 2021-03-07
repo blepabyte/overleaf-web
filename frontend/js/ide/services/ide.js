@@ -13,31 +13,15 @@
  * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
  */
 import App from '../../base'
-import EditorWatchdogManager from '../connection/EditorWatchdogManager'
 // We create and provide this as service so that we can access the global ide
 // from within other parts of the angular app.
-App.factory('ide', function(
-  $http,
-  queuedHttp,
-  $modal,
-  $q,
-  $filter,
-  $timeout,
-  eventTracking
-) {
+App.factory('ide', function($http, queuedHttp, $modal, $q, $filter, $timeout) {
   const ide = {}
   ide.$http = $http
   ide.queuedHttp = queuedHttp
   ide.$q = $q
   ide.$filter = $filter
   ide.$timeout = $timeout
-  ide.globalEditorWatchdogManager = new EditorWatchdogManager({
-    onTimeoutHandler: meta => {
-      eventTracking.sendMB('losing-edits', meta)
-      // clone the meta object, reportError adds additional fields into it
-      ide.reportError('losing-edits', Object.assign({}, meta))
-    }
-  })
 
   this.recentEvents = []
   ide.pushEvent = (type, meta) => {
@@ -103,8 +87,6 @@ App.factory('ide', function(
     $modal.open({
       templateUrl: 'outOfSyncModalTemplate',
       controller: 'OutOfSyncModalController',
-      backdrop: false, // not dismissable by clicking background
-      keyboard: false, // prevent dismiss via keyboard
       resolve: {
         title() {
           return title
@@ -154,7 +136,7 @@ App.controller('GenericMessageModalController', function(
 
 App.controller('OutOfSyncModalController', function(
   $scope,
-  $window,
+  $modalInstance,
   title,
   message,
   editorContent
@@ -163,11 +145,7 @@ App.controller('OutOfSyncModalController', function(
   $scope.message = message
   $scope.editorContent = editorContent
 
-  $scope.done = () => {
-    // Reload the page to avoid staying in an inconsistent state.
-    // https://github.com/overleaf/issues/issues/3694
-    $window.location.reload()
-  }
+  return ($scope.done = () => $modalInstance.close())
 })
 
 function __guard__(value, transform) {

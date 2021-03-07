@@ -1,5 +1,5 @@
 /* eslint-disable
-    node/handle-callback-err,
+    handle-callback-err,
     max-len,
     no-return-assign,
     no-unused-vars,
@@ -50,12 +50,11 @@ describe('ArchiveManager', function() {
         console: console
       },
       requires: {
-        'settings-sharelatex': {},
         yauzl: (this.yauzl = {
           open: sinon.stub().callsArgWith(2, null, this.zipfile)
         }),
         'logger-sharelatex': this.logger,
-        '@overleaf/metrics': this.metrics,
+        'metrics-sharelatex': this.metrics,
         fs: (this.fs = {}),
         'fs-extra': (this.fse = {}),
         './ArchiveErrors': ArchiveErrors

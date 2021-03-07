@@ -1,7 +1,7 @@
 import _ from 'lodash'
 /* eslint-disable
     camelcase,
-    node/handle-callback-err,
+    handle-callback-err,
     max-len,
     no-return-assign,
     no-unused-vars,
@@ -17,16 +17,13 @@ import _ from 'lodash'
  */
 import App from '../../../base'
 App.controller('FileTreeController', function($scope, $modal, ide, $rootScope) {
-  $scope.openNewDocModal = reactBridgeParentFolderId =>
+  $scope.openNewDocModal = () =>
     $modal.open({
       templateUrl: 'newFileModalTemplate',
       controller: 'NewFileModalController',
       size: 'lg',
       resolve: {
         parent_folder() {
-          if (reactBridgeParentFolderId) {
-            return { id: reactBridgeParentFolderId }
-          }
           return ide.fileTreeManager.getCurrentFolder()
         },
         projectFeatures() {
@@ -52,7 +49,7 @@ App.controller('FileTreeController', function($scope, $modal, ide, $rootScope) {
       }
     })
 
-  $scope.openUploadFileModal = reactBridgeParentFolderId =>
+  $scope.openUploadFileModal = () =>
     $modal.open({
       templateUrl: 'newFileModalTemplate',
       controller: 'NewFileModalController',
@@ -62,9 +59,6 @@ App.controller('FileTreeController', function($scope, $modal, ide, $rootScope) {
           return ide.$scope.project.features
         },
         parent_folder() {
-          if (reactBridgeParentFolderId) {
-            return { id: reactBridgeParentFolderId }
-          }
           return ide.fileTreeManager.getCurrentFolder()
         },
         type() {
@@ -75,19 +69,6 @@ App.controller('FileTreeController', function($scope, $modal, ide, $rootScope) {
         }
       }
     })
-
-  if (window.showReactFileTree) {
-    window.addEventListener(
-      'FileTreeReactBridge.openNewDocModal',
-      ({ detail }) => {
-        if (detail.mode === 'upload') {
-          $scope.openUploadFileModal(detail.parentFolderId)
-        } else {
-          $scope.openNewDocModal(detail.parentFolderId)
-        }
-      }
-    )
-  }
 
   $scope.orderByFoldersFirst = function(entity) {
     if ((entity != null ? entity.type : undefined) === 'folder') {
@@ -195,27 +176,13 @@ App.controller('NewFileModalController', function(
       )
     }
   })
-  $scope.$on('done', (e, opts = {}) => {
+  return $scope.$on('done', (e, opts = {}) => {
     const isBibFile = opts.name && /^.*\.bib$/.test(opts.name)
     if (opts.shouldReindexReferences || isBibFile) {
       ide.$scope.$emit('references:should-reindex', {})
     }
     $modalInstance.dismiss('done')
   })
-
-  if (window.showReactFileTree) {
-    window.addEventListener(
-      'FileTreeReactBridge.openNewFileModal',
-      ({ detail }) => {
-        if (detail.done) {
-          ide.$scope.FileTreeReactBridgePromise.resolve()
-        }
-        if (detail.error) {
-          ide.$scope.FileTreeReactBridgePromise.reject(detail)
-        }
-      }
-    )
-  }
 })
 
 App.controller('NewDocModalController', function($scope, ide, $timeout) {
@@ -239,11 +206,6 @@ App.controller('NewDocModalController', function($scope, ide, $timeout) {
         const { data } = response
         $scope.error = data
         $scope.state.inflight = false
-      })
-      .finally(function() {
-        if (!$scope.$$phase) {
-          $scope.$apply()
-        }
       })
   })
 })
@@ -270,7 +232,9 @@ App.controller('UploadFileModalController', function(
     var decreseTimeout = () =>
       $timeout(function() {
         if ($scope.secondsToRedirect === 0) {
-          return ($window.location.href = `/login?redir=/project/${ide.project_id}`)
+          return ($window.location.href = `/login?redir=/project/${
+            ide.project_id
+          }`)
         } else {
           decreseTimeout()
           return ($scope.secondsToRedirect = $scope.secondsToRedirect - 1)
@@ -598,11 +562,6 @@ App.controller('ProjectLinkedFileModalController', function(
         const { data } = response
         $scope.error = data
       })
-      .finally(function() {
-        if (!$scope.$$phase) {
-          $scope.$apply()
-        }
-      })
   })
 })
 
@@ -662,11 +621,6 @@ export default App.controller('UrlLinkedFileModalController', function(
         const { data } = response
         $scope.error = data
         return ($scope.state.inflight = false)
-      })
-      .finally(function() {
-        if (!$scope.$$phase) {
-          $scope.$apply()
-        }
       })
   })
 })

@@ -25,11 +25,9 @@ describe('PasswordReset', function() {
       }
     })
 
-    token = (
-      await db.tokens.findOne({
-        'data.user_id': user._id.toString()
-      })
-    ).token
+    token = (await db.tokens.findOne({
+      'data.user_id': user._id.toString()
+    })).token
   })
   describe('with a valid token', function() {
     describe('when logged in', function() {

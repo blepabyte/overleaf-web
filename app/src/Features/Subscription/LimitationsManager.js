@@ -1,7 +1,8 @@
 /* eslint-disable
     camelcase,
-    node/handle-callback-err,
+    handle-callback-err,
     max-len,
+    standard/no-callback-literal,
 */
 // TODO: This file was created by bulk-decaffeinate.
 // Fix any style issues and re-enable lint.

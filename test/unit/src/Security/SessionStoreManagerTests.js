@@ -11,7 +11,7 @@ describe('SessionStoreManager', function() {
         console: console
       },
       requires: {
-        '@overleaf/metrics': (this.Metrics = { inc: sinon.stub() }),
+        'metrics-sharelatex': (this.Metrics = { inc: sinon.stub() }),
         'logger-sharelatex': (this.logger = {
           log: sinon.stub(),
           warn: sinon.stub(),

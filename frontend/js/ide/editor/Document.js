@@ -1,6 +1,7 @@
+import _ from 'lodash'
 /* eslint-disable
     camelcase,
-    node/handle-callback-err,
+    handle-callback-err,
     max-len,
 */
 // TODO: This file was created by bulk-decaffeinate.
@@ -21,12 +22,11 @@ import ShareJsDoc from './ShareJsDoc'
 import RangesTracker from '../review-panel/RangesTracker'
 let Document
 
-export default Document = (function() {
+export default (Document = (function() {
   Document = class Document extends EventEmitter {
     static initClass() {
       this.prototype.MAX_PENDING_OP_SIZE = 64
     }
-
     static getDocument(ide, doc_id) {
       if (!this.openDocs) {
         this.openDocs = {}
@@ -84,8 +84,8 @@ export default Document = (function() {
       this.connected = this.ide.socket.socket.connected
       this.joined = false
       this.wantToBeJoined = false
-      this._checkAceConsistency = () => this._checkConsistency(this.ace)
-      this._checkCMConsistency = () => this._checkConsistency(this.cm)
+      this._checkAceConsistency = _.bind(this._checkConsistency, this, this.ace)
+      this._checkCMConsistency = _.bind(this._checkConsistency, this, this.cm)
       this._bindToEditorEvents()
       this._bindToSocketEvents()
     }
@@ -140,21 +140,21 @@ export default Document = (function() {
     }
 
     _checkConsistency(editor) {
-      // We've been seeing a lot of errors when I think there shouldn't be
-      // any, which may be related to this check happening before the change is
-      // applied. If we use a timeout, hopefully we can reduce this.
-      return setTimeout(() => {
-        const editorValue = editor != null ? editor.getValue() : undefined
-        const sharejsValue =
-          this.doc != null ? this.doc.getSnapshot() : undefined
-        if (editorValue !== sharejsValue) {
-          return this._onError(
-            new Error('Editor text does not match server text'),
-            {},
-            editorValue
-          )
-        }
-      }, 0)
+      return () => {
+        // We've been seeing a lot of errors when I think there shouldn't be
+        // any, which may be related to this check happening before the change is
+        // applied. If we use a timeout, hopefully we can reduce this.
+        return setTimeout(() => {
+          const editorValue = editor != null ? editor.getValue() : undefined
+          const sharejsValue =
+            this.doc != null ? this.doc.getSnapshot() : undefined
+          if (editorValue !== sharejsValue) {
+            return this._onError(
+              new Error('Editor text does not match server text')
+            )
+          }
+        }, 0)
+      }
     }
 
     getSnapshot() {
@@ -200,16 +200,7 @@ export default Document = (function() {
     _bindToSocketEvents() {
       this._onUpdateAppliedHandler = update => this._onUpdateApplied(update)
       this.ide.socket.on('otUpdateApplied', this._onUpdateAppliedHandler)
-      this._onErrorHandler = (error, message) => {
-        // 'otUpdateError' are emitted per doc socket.io room, hence we can be
-        //  sure that message.doc_id exists.
-        if (message.doc_id !== this.doc_id) {
-          // This error is for another doc. Do not action it. We could open
-          //  a modal that has the wrong context on it.
-          return
-        }
-        this._onError(error, message)
-      }
+      this._onErrorHandler = (error, update) => this._onError(error, update)
       this.ide.socket.on('otUpdateError', this._onErrorHandler)
       this._onDisconnectHandler = error => this._onDisconnect(error)
       return this.ide.socket.on('disconnect', this._onDisconnectHandler)
@@ -241,10 +232,9 @@ export default Document = (function() {
       )
     }
 
-    leaveAndCleanUp(cb) {
+    leaveAndCleanUp() {
       return this.leave(error => {
-        this._cleanUp()
-        if (cb) cb(error)
+        return this._cleanUp()
       })
     }
 
@@ -339,7 +329,7 @@ export default Document = (function() {
       if (inflightOp == null && pendingOp == null) {
         // there's nothing going on, this is ok.
         saved = true
-        sl_console.log('[pollSavedStatus] no inflight or pending ops')
+        sl_console.logOnce('[pollSavedStatus] no inflight or pending ops')
       } else if (inflightOp != null && inflightOp === this.oldInflightOp) {
         // The same inflight op has been sitting unacked since we
         // last checked, this is bad.
@@ -518,8 +508,7 @@ export default Document = (function() {
               this.doc_id,
               docLines,
               version,
-              this.ide.socket,
-              this.ide.globalEditorWatchdogManager
+              this.ide.socket
             )
             this._decodeRanges(ranges)
             this.ranges = new RangesTracker(
@@ -586,7 +575,9 @@ export default Document = (function() {
       // if we arrive here from _onError the pending and inflight ops will have been cleared
       if (this.hasBufferedOps()) {
         sl_console.log(
-          `[_cleanUp] Document (${this.doc_id}) has buffered ops, refusing to remove from openDocs`
+          `[_cleanUp] Document (${
+            this.doc_id
+          }) has buffered ops, refusing to remove from openDocs`
         )
         return // return immediately, do not unbind from events
       } else if (Document.openDocs[this.doc_id] === this) {
@@ -662,7 +653,7 @@ export default Document = (function() {
       })
     }
 
-    _onError(error, meta, editorContent) {
+    _onError(error, meta) {
       if (meta == null) {
         meta = {}
       }
@@ -691,7 +682,7 @@ export default Document = (function() {
       if (this.doc != null) {
         this.doc.clearInflightAndPendingOps()
       }
-      this.trigger('error', error, meta, editorContent)
+      this.trigger('error', error, meta)
       // The clean up should run after the error is triggered because the error triggers a
       // disconnect. If we run the clean up first, we remove our event handlers and miss
       // the disconnect event, which means we try to leaveDoc when the connection comes back.
@@ -757,7 +748,7 @@ export default Document = (function() {
   }
   Document.initClass()
   return Document
-})()
+})())
 
 function __guard__(value, transform) {
   return typeof value !== 'undefined' && value !== null

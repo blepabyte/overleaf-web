@@ -44,7 +44,9 @@ App.controller('ProjectInviteNotificationController', function($scope, $http) {
   $scope.accept = function() {
     $scope.notification.inflight = true
     return $http({
-      url: `/project/${$scope.notification.messageOpts.projectId}/invite/token/${$scope.notification.messageOpts.token}/accept`,
+      url: `/project/${
+        $scope.notification.messageOpts.projectId
+      }/invite/token/${$scope.notification.messageOpts.token}/accept`,
       method: 'POST',
       headers: {
         'X-Csrf-Token': window.csrfToken,
@@ -110,19 +112,12 @@ App.controller('EmailNotificationController', function(
 
   $scope.resendConfirmationEmail = function(userEmail) {
     userEmail.confirmationInflight = true
-    userEmail.error = false
-    UserAffiliationsDataService.resendConfirmationEmail(userEmail.email)
-      .then(() => {
-        userEmail.hide = true
-        $scope.$emit('project-list:notifications-received')
-      })
-      .catch(error => {
-        userEmail.error = true
-        console.error(error)
-        $scope.$emit('project-list:notifications-received')
-      })
-      .finally(() => {
-        userEmail.confirmationInflight = false
-      })
+    return UserAffiliationsDataService.resendConfirmationEmail(
+      userEmail.email
+    ).then(function() {
+      userEmail.hide = true
+      userEmail.confirmationInflight = false
+      $scope.$emit('project-list:notifications-received')
+    })
   }
 })

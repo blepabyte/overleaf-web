@@ -41,14 +41,7 @@ test_module: test_unit_module test_acceptance_module
 # Unit tests
 #
 
-test_unit: test_unit_all
-test_unit_all:
-	COMPOSE_PROJECT_NAME=unit_test_all_$(BUILD_DIR_NAME) $(DOCKER_COMPOSE) run --rm test_unit npm run test:unit:all
-	COMPOSE_PROJECT_NAME=unit_test_all_$(BUILD_DIR_NAME) $(DOCKER_COMPOSE) down -v -t 0
-
-test_unit_all_silent:
-	COMPOSE_PROJECT_NAME=unit_test_all_$(BUILD_DIR_NAME) $(DOCKER_COMPOSE) run --rm test_unit npm run test:unit:all:silent
-	COMPOSE_PROJECT_NAME=unit_test_all_$(BUILD_DIR_NAME) $(DOCKER_COMPOSE) down -v -t 0
+test_unit: test_unit_app test_unit_modules
 
 test_unit_app:
 	COMPOSE_PROJECT_NAME=unit_test_$(BUILD_DIR_NAME) $(DOCKER_COMPOSE) down -v -t 0
@@ -161,84 +154,60 @@ WITH_NODE_MODULES_PATH = \
 	format_backend \
 	format_frontend \
 	format_misc \
-	format_styles \
-	format_test_app_unit \
-	format_test_app_rest \
-	format_test_modules \
+	format_test \
 	$(TEST_SUITES) \
 
 $(WITH_NODE_MODULES_PATH): export PATH=$(NODE_MODULES_PATH)
 
-lint: lint_backend
-lint_backend:
-	npx eslint \
+format: format_backend
+format_backend:
+	prettier-eslint \
 		app.js \
 		'app/**/*.js' \
 		'modules/*/index.js' \
 		'modules/*/app/**/*.js' \
-		--max-warnings=0
+	 	--list-different
 
-lint: lint_frontend
-lint_frontend:
-	npx eslint \
-		'frontend/**/*.js' \
-		'modules/*/frontend/**/*.js' \
-		--max-warnings=0
+format: format_frontend
+format_frontend:
+	prettier-eslint \
+		'frontend/**/*.{js,less}' \
+		'modules/*/frontend/**/*.{js,less}' \
+		--list-different
 
-lint: lint_test
-lint_test: lint_test_app
-lint_test_app: lint_test_app_unit
-lint_test_app_unit:
-	npx eslint \
-		'test/unit/**/*.js' \
-		--max-warnings=0
-
-lint_test_app: lint_test_app_rest
-lint_test_app_rest:
-	npx eslint \
+format: format_test
+format_test:
+	prettier-eslint \
 		'test/**/*.js' \
-		--ignore-pattern 'test/unit/**/*.js' \
-		--max-warnings=0
-
-lint_test: lint_test_modules
-lint_test_modules:
-	npx eslint \
 		'modules/*/test/**/*.js' \
-		--max-warnings=0
+		--list-different
 
-lint: lint_misc
+format: format_misc
 # migrations, scripts, webpack config, karma config
-lint_misc:
-	npx eslint . \
-		--ignore-pattern app.js \
-		--ignore-pattern 'app/**/*.js' \
-		--ignore-pattern 'modules/*/app/**/*.js' \
-		--ignore-pattern 'modules/*/index.js' \
-		--ignore-pattern 'frontend/**/*.js' \
-		--ignore-pattern 'modules/*/frontend/**/*.js' \
-		--ignore-pattern 'test/**/*.js' \
-		--ignore-pattern 'modules/*/test/**/*.js' \
-		--max-warnings=0
+format_misc:
+	prettier-eslint \
+		'**/*.{js,less}' \
+		--ignore app.js \
+		--ignore 'app/**/*.js' \
+		--ignore 'modules/*/app/**/*.js' \
+		--ignore 'modules/*/index.js' \
+		--ignore 'frontend/**/*.{js,less}' \
+		--ignore 'modules/*/frontend/**/*.{js,less}' \
+		--ignore 'test/**/*.js' \
+		--ignore 'modules/*/test/**/*.js' \
+		--list-different
 
-lint_in_docker:
-	$(RUN_LINT_FORMAT) make lint -j --output-sync
-
-format: format_js
-format_js:
-	npm run --silent format
-
-format: format_styles
-format_styles:
-	npm run --silent format:styles
+format_in_docker:
+	$(RUN_LINT_FORMAT) make format -j --output-sync
 
 format_fix:
 	npm run --silent format:fix
 
-format_styles_fix:
-	npm run --silent format:styles:fix
+lint:
+	npm run --silent lint
 
-format_in_docker:
-	$(RUN_LINT_FORMAT) make format -j --output-sync
+lint_in_docker:
+	$(RUN_LINT_FORMAT) make lint
 
 #
 # Build & publish

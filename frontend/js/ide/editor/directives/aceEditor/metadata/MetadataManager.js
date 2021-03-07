@@ -25,7 +25,7 @@ const getLastCommandFragment = function(lineUpToCursor) {
   }
 }
 
-export default MetadataManager = class MetadataManager {
+export default (MetadataManager = class MetadataManager {
   constructor($scope, editor, element, Metadata) {
     this.$scope = $scope
     this.editor = editor
@@ -34,7 +34,7 @@ export default MetadataManager = class MetadataManager {
     this.debouncer = {} // DocId => Timeout
 
     const onChange = change => {
-      if (change.origin === 'remote') {
+      if (change.remote) {
         return
       }
       if (!['remove', 'insert'].includes(change.action)) {
@@ -97,4 +97,4 @@ export default MetadataManager = class MetadataManager {
   getAllPackages() {
     return this.Metadata.getAllPackages()
   }
-}
+})

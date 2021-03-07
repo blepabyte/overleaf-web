@@ -1,6 +1,6 @@
 /* eslint-disable
     camelcase,
-    node/handle-callback-err,
+    handle-callback-err,
     max-len,
     no-return-assign,
     no-unused-vars,
@@ -149,7 +149,7 @@ describe('ChatController', function() {
       }
       sinon.spy(this.UserInfoManager, 'getPersonalInfo')
       return (this.UserInfoController.formatPersonalInfo = user => ({
-        formatted: user.mock
+        formatted: user['mock']
       }))
     })
 

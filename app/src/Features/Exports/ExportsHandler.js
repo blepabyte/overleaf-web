@@ -1,8 +1,9 @@
 /* eslint-disable
     camelcase,
-    node/handle-callback-err,
+    handle-callback-err,
     max-len,
     no-unused-vars,
+    standard/no-callback-literal,
 */
 // TODO: This file was created by bulk-decaffeinate.
 // Fix any style issues and re-enable lint.
@@ -201,7 +202,9 @@ module.exports = ExportsHandler = self = {
     }
     return request.get(
       {
-        url: `${settings.apis.project_history.url}/project/${project_id}/version`,
+        url: `${
+          settings.apis.project_history.url
+        }/project/${project_id}/version`,
         json: true
       },
       function(err, res, body) {
@@ -214,7 +217,9 @@ module.exports = ExportsHandler = self = {
           return callback(null, body.version)
         } else {
           err = new OError(
-            `project history version returned a failure status code: ${res.statusCode}`,
+            `project history version returned a failure status code: ${
+              res.statusCode
+            }`,
             { project_id }
           )
           return callback(err)
@@ -257,7 +262,9 @@ module.exports = ExportsHandler = self = {
     }
     return request.get(
       {
-        url: `${settings.apis.v1.url}/api/v1/sharelatex/exports/${export_id}/${type}_url`,
+        url: `${
+          settings.apis.v1.url
+        }/api/v1/sharelatex/exports/${export_id}/${type}_url`,
         auth: { user: settings.apis.v1.user, pass: settings.apis.v1.pass }
       },
       function(err, res, body) {

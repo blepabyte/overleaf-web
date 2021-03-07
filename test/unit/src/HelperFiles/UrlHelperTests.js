@@ -8,13 +8,7 @@ const modulePath = require('path').join(
 
 describe('UrlHelper', function() {
   beforeEach(function() {
-    this.settings = {
-      apis: { linkedUrlProxy: { url: undefined } },
-      siteUrl: 'http://localhost:3000'
-    }
-    this.UrlHelper = SandboxedModule.require(modulePath, {
-      requires: { 'settings-sharelatex': this.settings }
-    })
+    this.UrlHelper = SandboxedModule.require(modulePath, {})
   })
   describe('getSafeRedirectPath', function() {
     it('sanitize redirect path to prevent open redirects', function() {

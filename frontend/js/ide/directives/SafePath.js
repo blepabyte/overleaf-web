@@ -12,10 +12,9 @@
  */
 // This file is shared between the frontend and server code of web, so that
 // filename validation is the same in both implementations.
-// The logic in all copies must be kept in sync:
-//   app/src/Features/Project/SafePath.js
-//   frontend/js/ide/directives/SafePath.js
-//   frontend/js/features/file-tree/util/safe-path.js
+// Both copies must be kept in sync:
+//   app/coffee/Features/Project/SafePath.coffee
+//   public/coffee/ide/directives/SafePath.coffee
 
 let SafePath
 const BADCHAR_RX = new RegExp(
@@ -70,7 +69,7 @@ prototype\
 
 const MAX_PATH = 1024 // Maximum path length, in characters. This is fairly arbitrary.
 
-export default SafePath = {
+export default (SafePath = {
   clean(filename) {
     filename = filename.replace(BADCHAR_RX, '_')
     // for BADFILE_RX replace any matches with an equal number of underscores
@@ -93,4 +92,4 @@ export default SafePath = {
   isAllowedLength(pathname) {
     return pathname.length > 0 && pathname.length <= MAX_PATH
   }
-}
+})

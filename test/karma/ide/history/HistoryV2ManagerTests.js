@@ -152,7 +152,6 @@ export default describe('HistoryV2Manager', function() {
         isAdmin: false
       }
       this.ide = {
-        globalEditorWatchdogManager: { attachToEditor() {} },
         $q: $q,
         $http: $http,
         $filter: $filter

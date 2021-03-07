@@ -48,7 +48,7 @@ describe('DocumentUpdaterHandler', function() {
           Project: (this.Project = {})
         },
         '../../Features/Project/ProjectLocator': {},
-        '@overleaf/metrics': {
+        'metrics-sharelatex': {
           Timer: class {
             done() {}
           }
@@ -67,7 +67,9 @@ describe('DocumentUpdaterHandler', function() {
       it('should flush the document from the document updater', function() {
         this.request
           .calledWithMatch({
-            url: `${this.settings.apis.documentupdater.url}/project/${this.project_id}/flush`,
+            url: `${this.settings.apis.documentupdater.url}/project/${
+              this.project_id
+            }/flush`,
             method: 'POST'
           })
           .should.equal(true)
@@ -132,7 +134,9 @@ describe('DocumentUpdaterHandler', function() {
       it('should delete the project from the document updater', function() {
         this.request
           .calledWithMatch({
-            url: `${this.settings.apis.documentupdater.url}/project/${this.project_id}`,
+            url: `${this.settings.apis.documentupdater.url}/project/${
+              this.project_id
+            }`,
             method: 'DELETE'
           })
           .should.equal(true)
@@ -204,7 +208,9 @@ describe('DocumentUpdaterHandler', function() {
       it('should flush the document from the document updater', function() {
         this.request
           .calledWithMatch({
-            url: `${this.settings.apis.documentupdater.url}/project/${this.project_id}/doc/${this.doc_id}/flush`,
+            url: `${this.settings.apis.documentupdater.url}/project/${
+              this.project_id
+            }/doc/${this.doc_id}/flush`,
             method: 'POST'
           })
           .should.equal(true)
@@ -274,7 +280,9 @@ describe('DocumentUpdaterHandler', function() {
       it('should delete the document from the document updater', function() {
         this.request
           .calledWithMatch({
-            url: `${this.settings.apis.documentupdater.url}/project/${this.project_id}/doc/${this.doc_id}`,
+            url: `${this.settings.apis.documentupdater.url}/project/${
+              this.project_id
+            }/doc/${this.doc_id}`,
             method: 'DELETE'
           })
           .should.equal(true)
@@ -347,7 +355,9 @@ describe('DocumentUpdaterHandler', function() {
       it('should set the document in the document updater', function() {
         this.request
           .calledWith({
-            url: `${this.settings.apis.documentupdater.url}/project/${this.project_id}/doc/${this.doc_id}`,
+            url: `${this.settings.apis.documentupdater.url}/project/${
+              this.project_id
+            }/doc/${this.doc_id}`,
             json: {
               lines: this.lines,
               source: this.source,
@@ -440,7 +450,9 @@ describe('DocumentUpdaterHandler', function() {
       it('should get the document from the document updater', function() {
         this.request
           .calledWith({
-            url: `${this.settings.apis.documentupdater.url}/project/${this.project_id}/doc/${this.doc_id}?fromVersion=${this.fromVersion}`,
+            url: `${this.settings.apis.documentupdater.url}/project/${
+              this.project_id
+            }/doc/${this.doc_id}?fromVersion=${this.fromVersion}`,
             method: 'GET',
             json: true
           })
@@ -530,7 +542,9 @@ describe('DocumentUpdaterHandler', function() {
       })
 
       it('should get the documents from the document updater', function() {
-        const url = `${this.settings.apis.documentupdater.url}/project/${this.project_id}/get_and_flush_if_old?state=${this.project_state_hash}`
+        const url = `${this.settings.apis.documentupdater.url}/project/${
+          this.project_id
+        }/get_and_flush_if_old?state=${this.project_state_hash}`
         this.request.post.calledWith(url).should.equal(true)
       })
 
@@ -586,7 +600,9 @@ describe('DocumentUpdaterHandler', function() {
       it('should clear the project state from the document updater', function() {
         this.request
           .calledWithMatch({
-            url: `${this.settings.apis.documentupdater.url}/project/${this.project_id}/clearState`,
+            url: `${this.settings.apis.documentupdater.url}/project/${
+              this.project_id
+            }/clearState`,
             method: 'POST'
           })
           .should.equal(true)
@@ -657,7 +673,9 @@ describe('DocumentUpdaterHandler', function() {
       it('should accept the change in the document updater', function() {
         this.request
           .calledWith({
-            url: `${this.settings.apis.documentupdater.url}/project/${this.project_id}/doc/${this.doc_id}/change/accept`,
+            url: `${this.settings.apis.documentupdater.url}/project/${
+              this.project_id
+            }/doc/${this.doc_id}/change/accept`,
             json: {
               change_ids: [this.change_id]
             },
@@ -741,7 +759,9 @@ describe('DocumentUpdaterHandler', function() {
       it('should delete the thread in the document updater', function() {
         this.request
           .calledWithMatch({
-            url: `${this.settings.apis.documentupdater.url}/project/${this.project_id}/doc/${this.doc_id}/comment/${this.thread_id}`,
+            url: `${this.settings.apis.documentupdater.url}/project/${
+              this.project_id
+            }/doc/${this.doc_id}/comment/${this.thread_id}`,
             method: 'DELETE'
           })
           .should.equal(true)
@@ -833,7 +853,9 @@ describe('DocumentUpdaterHandler', function() {
     describe('with project history enabled', function() {
       beforeEach(function() {
         this.settings.apis.project_history.sendProjectStructureOps = true
-        this.url = `${this.settings.apis.documentupdater.url}/project/${this.project_id}`
+        this.url = `${this.settings.apis.documentupdater.url}/project/${
+          this.project_id
+        }`
         this.request.callsArgWith(1, null, { statusCode: 204 }, '')
       })
 

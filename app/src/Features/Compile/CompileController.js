@@ -1,6 +1,6 @@
 /* eslint-disable
     camelcase,
-    node/handle-callback-err,
+    handle-callback-err,
     max-len,
     no-undef,
     no-unused-vars,
@@ -15,7 +15,7 @@
  */
 let CompileController
 const OError = require('@overleaf/o-error')
-const Metrics = require('@overleaf/metrics')
+const Metrics = require('metrics-sharelatex')
 const ProjectGetter = require('../Project/ProjectGetter')
 const CompileManager = require('./CompileManager')
 const ClsiManager = require('./ClsiManager')
@@ -255,12 +255,11 @@ module.exports = CompileController = {
 
   deleteAuxFiles(req, res, next) {
     const project_id = req.params.Project_id
-    const { clsiserverid } = req.query
     return CompileController._compileAsUser(req, function(error, user_id) {
       if (error != null) {
         return next(error)
       }
-      CompileManager.deleteAuxFiles(project_id, user_id, clsiserverid, function(
+      return CompileManager.deleteAuxFiles(project_id, user_id, function(
         error
       ) {
         if (error != null) {
@@ -466,7 +465,7 @@ module.exports = CompileController = {
     if (next == null) {
       next = function(error) {}
     }
-    _getPersistenceOptions(req, project_id, (err, persistenceOptions) => {
+    return ClsiCookieManager.getCookieJar(project_id, function(err, jar) {
       let qs
       if (err != null) {
         OError.tag(err, 'error getting cookie jar for clsi request')
@@ -480,15 +479,10 @@ module.exports = CompileController = {
       url = `${compilerUrl}${url}`
       const oneMinute = 60 * 1000
       // the base request
-      const options = {
-        url,
-        method: req.method,
-        timeout: oneMinute,
-        ...persistenceOptions
-      }
+      const options = { url, method: req.method, timeout: oneMinute, jar }
       // add any provided query string
       if (qs != null) {
-        options.qs = Object.assign(options.qs, qs)
+        options.qs = qs
       }
       // if we have a build parameter, pass it through to the clsi
       if (
@@ -524,35 +518,20 @@ module.exports = CompileController = {
   wordCount(req, res, next) {
     const project_id = req.params.Project_id
     const file = req.query.file || false
-    const { clsiserverid } = req.query
     return CompileController._compileAsUser(req, function(error, user_id) {
       if (error != null) {
         return next(error)
       }
-      CompileManager.wordCount(
-        project_id,
-        user_id,
-        file,
-        clsiserverid,
-        function(error, body) {
-          if (error != null) {
-            return next(error)
-          }
-          res.contentType('application/json')
-          return res.send(body)
+      return CompileManager.wordCount(project_id, user_id, file, function(
+        error,
+        body
+      ) {
+        if (error != null) {
+          return next(error)
         }
-      )
-    })
-  }
-}
-
-function _getPersistenceOptions(req, projectId, callback) {
-  const { clsiserverid } = req.query
-  if (clsiserverid && typeof clsiserverid === 'string') {
-    callback(null, { qs: { clsiserverid } })
-  } else {
-    ClsiCookieManager.getCookieJar(projectId, (err, jar) => {
-      callback(err, { jar })
+        res.contentType('application/json')
+        return res.send(body)
+      })
     })
   }
 }

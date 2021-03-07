@@ -1,33 +1,23 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import PropTypes from 'prop-types'
 import MessageList from './message-list'
 import MessageInput from './message-input'
 import InfiniteScroll from './infinite-scroll'
 import Icon from '../../../shared/components/icon'
 import { useTranslation } from 'react-i18next'
-import { useChatStore } from '../store/chat-store-effect'
-import withErrorBoundary from '../../../infrastructure/error-boundary'
 
-function ChatPane({ resetUnreadMessages, chatIsOpen }) {
-  const { t } = useTranslation()
-
-  const {
-    atEnd,
-    loading,
-    loadMoreMessages,
-    messages,
-    sendMessage,
-    userId
-  } = useChatStore()
-
-  const [initialMessagesLoaded, setInitialMessagesLoaded] = useState(false)
-
+function ChatPane({
+  atEnd,
+  loading,
+  loadMoreMessages,
+  messages,
+  resetUnreadMessages,
+  sendMessage,
+  userId
+}) {
   useEffect(() => {
-    if (chatIsOpen && !initialMessagesLoaded) {
-      loadMoreMessages()
-      setInitialMessagesLoaded(true)
-    }
-  }, [initialMessagesLoaded, loadMoreMessages, chatIsOpen])
+    loadMoreMessages()
+  }, [])
 
   const shouldDisplayPlaceholder = !loading && messages.length === 0
 
@@ -46,7 +36,6 @@ function ChatPane({ resetUnreadMessages, chatIsOpen }) {
         itemCount={messageContentCount}
       >
         <div>
-          <h2 className="sr-only">{t('chat')}</h2>
           {loading && <LoadingSpinner />}
           {shouldDisplayPlaceholder && <Placeholder />}
           <MessageList
@@ -69,7 +58,7 @@ function LoadingSpinner() {
   return (
     <div className="loading">
       <Icon type="fw" modifier="refresh" spin />
-      {`  ${t('loading')}…`}
+      {`  ${t('loading')}...`}
     </div>
   )
 }
@@ -89,8 +78,13 @@ function Placeholder() {
 }
 
 ChatPane.propTypes = {
+  atEnd: PropTypes.bool,
+  loading: PropTypes.bool,
+  loadMoreMessages: PropTypes.func.isRequired,
+  messages: PropTypes.array.isRequired,
   resetUnreadMessages: PropTypes.func.isRequired,
-  chatIsOpen: PropTypes.bool
+  sendMessage: PropTypes.func.isRequired,
+  userId: PropTypes.string.isRequired
 }
 
-export default withErrorBoundary(ChatPane)
+export default ChatPane

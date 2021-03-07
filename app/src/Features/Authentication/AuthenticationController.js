@@ -2,7 +2,7 @@ const AuthenticationManager = require('./AuthenticationManager')
 const OError = require('@overleaf/o-error')
 const LoginRateLimiter = require('../Security/LoginRateLimiter')
 const UserUpdater = require('../User/UserUpdater')
-const Metrics = require('@overleaf/metrics')
+const Metrics = require('metrics-sharelatex')
 const logger = require('logger-sharelatex')
 const querystring = require('querystring')
 const Settings = require('settings-sharelatex')
@@ -296,7 +296,7 @@ const AuthenticationController = {
       return next()
     }
 
-    if (req.headers.authorization != null) {
+    if (req.headers['authorization'] != null) {
       AuthenticationController.httpAuth(req, res, next)
     } else if (AuthenticationController.isUserLoggedIn(req)) {
       next()

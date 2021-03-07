@@ -1,5 +1,5 @@
 /* eslint-disable
-    node/handle-callback-err,
+    handle-callback-err,
     max-len,
     no-return-assign,
     no-unused-vars,
@@ -35,7 +35,6 @@ describe('Subscription Locator Tests', function() {
         console: console
       },
       requires: {
-        './GroupPlansData': {},
         '../../models/Subscription': {
           Subscription: this.Subscription
         },

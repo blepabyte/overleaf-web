@@ -530,7 +530,8 @@ App.controller('ProjectPageController', function(
       })
   }
 
-  $scope.openCloneProjectModal = function(project) {
+  $scope.openCloneProjectModal = function() {
+    let project = $scope.getFirstSelectedProject()
     if (!project) {
       return
     }
@@ -876,7 +877,24 @@ App.controller('ProjectListItemController', function(
 
   $scope.clone = function(e) {
     e.stopPropagation()
-    $scope.openCloneProjectModal($scope.project)
+    $scope.project.isTableActionInflight = true
+    return $scope
+      .cloneProject($scope.project, `${$scope.project.name} (Copy)`)
+      .then(() => ($scope.project.isTableActionInflight = false))
+      .catch(function(response) {
+        const { data, status } = response
+        const error = status === 400 ? { message: data } : true
+        $modal.open({
+          templateUrl: 'showErrorModalTemplate',
+          controller: 'ShowErrorModalController',
+          resolve: {
+            error() {
+              return error
+            }
+          }
+        })
+        $scope.project.isTableActionInflight = false
+      })
   }
 
   $scope.download = function(e) {

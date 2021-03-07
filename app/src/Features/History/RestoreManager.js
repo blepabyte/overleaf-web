@@ -1,6 +1,6 @@
 /* eslint-disable
     camelcase,
-    node/handle-callback-err,
+    handle-callback-err,
     max-len,
     no-unused-vars,
 */
@@ -18,6 +18,7 @@ const Path = require('path')
 const FileWriter = require('../../infrastructure/FileWriter')
 const FileSystemImportManager = require('../Uploads/FileSystemImportManager')
 const ProjectEntityHandler = require('../Project/ProjectEntityHandler')
+const ProjectLocator = require('../Project/ProjectLocator')
 const EditorController = require('../Editor/EditorController')
 const Errors = require('../Errors/Errors')
 const moment = require('moment')

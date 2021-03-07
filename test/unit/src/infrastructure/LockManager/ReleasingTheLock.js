@@ -26,17 +26,7 @@ describe('LockManager - releasing the lock', function() {
     'logger-sharelatex': {
       log() {}
     },
-    'settings-sharelatex': {
-      redis: {},
-      lockManager: {
-        lockTestInterval: 50,
-        maxTestInterval: 1000,
-        maxLockWaitTime: 10000,
-        redisLockExpiry: 30,
-        slowExecutionThreshold: 5000
-      }
-    },
-    '@overleaf/metrics': {},
+    'metrics-sharelatex': {},
     './RedisWrapper': {
       client() {
         return {

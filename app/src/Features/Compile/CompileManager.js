@@ -1,6 +1,6 @@
 /* eslint-disable
     camelcase,
-    node/handle-callback-err,
+    handle-callback-err,
     max-len,
 */
 // TODO: This file was created by bulk-decaffeinate.
@@ -21,7 +21,7 @@ const ProjectGetter = require('../Project/ProjectGetter')
 const ProjectRootDocManager = require('../Project/ProjectRootDocManager')
 const UserGetter = require('../User/UserGetter')
 const ClsiManager = require('./ClsiManager')
-const Metrics = require('@overleaf/metrics')
+const Metrics = require('metrics-sharelatex')
 const rateLimiter = require('../../infrastructure/RateLimiter')
 
 module.exports = CompileManager = {
@@ -136,7 +136,7 @@ module.exports = CompileManager = {
     })
   },
 
-  deleteAuxFiles(project_id, user_id, clsiserverid, callback) {
+  deleteAuxFiles(project_id, user_id, callback) {
     if (callback == null) {
       callback = function(error) {}
     }
@@ -147,13 +147,7 @@ module.exports = CompileManager = {
       if (error != null) {
         return callback(error)
       }
-      ClsiManager.deleteAuxFiles(
-        project_id,
-        user_id,
-        limits,
-        clsiserverid,
-        callback
-      )
+      return ClsiManager.deleteAuxFiles(project_id, user_id, limits, callback)
     })
   },
 
@@ -259,7 +253,7 @@ module.exports = CompileManager = {
     })
   },
 
-  wordCount(project_id, user_id, file, clsiserverid, callback) {
+  wordCount(project_id, user_id, file, callback) {
     if (callback == null) {
       callback = function(error) {}
     }
@@ -270,14 +264,7 @@ module.exports = CompileManager = {
       if (error != null) {
         return callback(error)
       }
-      ClsiManager.wordCount(
-        project_id,
-        user_id,
-        file,
-        limits,
-        clsiserverid,
-        callback
-      )
+      return ClsiManager.wordCount(project_id, user_id, file, limits, callback)
     })
   }
 }

@@ -1,5 +1,5 @@
 /* eslint-disable
-    node/handle-callback-err,
+    handle-callback-err,
     max-len,
     no-return-assign,
     no-unused-vars,
@@ -62,6 +62,7 @@ describe('CollaboratorsInviteController', function() {
         '../Editor/EditorRealTimeController': (this.EditorRealTimeController = {
           emitToRoom: sinon.stub()
         }),
+        '../Notifications/NotificationsBuilder': (this.NotificationsBuilder = {}),
         '../Analytics/AnalyticsManager': this.AnalyticsManger,
         '../Authentication/AuthenticationController': this
           .AuthenticationController,

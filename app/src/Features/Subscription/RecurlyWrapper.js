@@ -1,9 +1,10 @@
 /* eslint-disable
     camelcase,
-    node/handle-callback-err,
+    handle-callback-err,
     max-len,
     no-unused-vars,
     node/no-deprecated-api,
+    standard/no-callback-literal,
 */
 // TODO: This file was created by bulk-decaffeinate.
 // Fix any style issues and re-enable lint.
@@ -992,18 +993,18 @@ const RecurlyWrapper = {
   _parseXml(xml, callback) {
     var convertDataTypes = function(data) {
       let key, value
-      if (data != null && data.$ != null) {
-        if (data.$.nil === 'nil') {
+      if (data != null && data['$'] != null) {
+        if (data['$']['nil'] === 'nil') {
           data = null
-        } else if (data.$.href != null) {
-          data.url = data.$.href
-          delete data.$
-        } else if (data.$.type === 'integer') {
-          data = parseInt(data._, 10)
-        } else if (data.$.type === 'datetime') {
-          data = new Date(data._)
-        } else if (data.$.type === 'array') {
-          delete data.$
+        } else if (data['$'].href != null) {
+          data.url = data['$'].href
+          delete data['$']
+        } else if (data['$']['type'] === 'integer') {
+          data = parseInt(data['_'], 10)
+        } else if (data['$']['type'] === 'datetime') {
+          data = new Date(data['_'])
+        } else if (data['$']['type'] === 'array') {
+          delete data['$']
           let array = []
           for (key in data) {
             value = data[key]

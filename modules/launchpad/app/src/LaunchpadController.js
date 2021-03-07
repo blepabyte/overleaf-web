@@ -1,5 +1,5 @@
 /* eslint-disable
-    node/handle-callback-err,
+    handle-callback-err,
     max-len,
     no-unused-vars,
 */
@@ -17,7 +17,7 @@ const Settings = require('settings-sharelatex')
 const Path = require('path')
 const Url = require('url')
 const logger = require('logger-sharelatex')
-const metrics = require('@overleaf/metrics')
+const metrics = require('metrics-sharelatex')
 const UserRegistrationHandler = require('../../../../app/src/Features/User/UserRegistrationHandler')
 const EmailHandler = require('../../../../app/src/Features/Email/EmailHandler')
 const _ = require('underscore')
@@ -168,7 +168,7 @@ module.exports = LaunchpadController = {
             return next(err)
           }
 
-          return User.updateOne(
+          return User.update(
             { _id: user._id },
             {
               $set: { isAdmin: true },
@@ -225,7 +225,7 @@ module.exports = LaunchpadController = {
         }
 
         logger.log({ user_id: user._id }, 'making user an admin')
-        User.updateOne(
+        User.update(
           { _id: user._id },
           {
             $set: {

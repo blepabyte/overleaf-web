@@ -17,7 +17,7 @@
  */
 
 import './libraries'
-import './infrastructure/error-reporter'
+import './utils/sentry'
 import './modules/recursionHelper'
 import './modules/errorCatcher'
 import './modules/localStorage'
@@ -66,19 +66,13 @@ const App = angular
             processEscapes: true,
             // Dollar delimiters are added by the mathjax directive
             inlineMath: [['\\(', '\\)']],
-            displayMath: [
-              ['$$', '$$'],
-              ['\\[', '\\]']
-            ]
+            displayMath: [['$$', '$$'], ['\\[', '\\]']]
           }
         })
     )
   })
 
-App.run(($rootScope, $templateCache) => {
-  const usersEmailElement = document.getElementById('ol-usersEmail')
-  $rootScope.usersEmail = usersEmailElement && usersEmailElement.content
-
+App.run($templateCache =>
   // UI Select templates are hard-coded and use Glyphicon icons (which we don't import).
   // The line below simply overrides the hard-coded template with our own, which is
   // basically the same but using Font Awesome icons.
@@ -86,11 +80,28 @@ App.run(($rootScope, $templateCache) => {
     'bootstrap/match.tpl.html',
     '<div class="ui-select-match" ng-hide="$select.open && $select.searchEnabled" ng-disabled="$select.disabled" ng-class="{\'btn-default-focus\':$select.focus}"><span tabindex="-1" class="btn btn-default form-control ui-select-toggle" aria-label="{{ $select.baseTitle }} activate" ng-disabled="$select.disabled" ng-click="$select.activate()" style="outline: 0;"><span ng-show="$select.isEmpty()" class="ui-select-placeholder text-muted">{{$select.placeholder}}</span> <span ng-hide="$select.isEmpty()" class="ui-select-match-text pull-left" ng-class="{\'ui-select-allow-clear\': $select.allowClear && !$select.isEmpty()}" ng-transclude=""></span> <i class="caret pull-right" ng-click="$select.toggle($event)"></i> <a ng-show="$select.allowClear && !$select.isEmpty() && ($select.disabled !== true)" aria-label="{{ $select.baseTitle }} clear" style="margin-right: 10px" ng-click="$select.clear($event)" class="btn btn-xs btn-link pull-right"><i class="fa fa-times" aria-hidden="true"></i></a></span></div>'
   )
-})
+)
 
-const sl_debugging = window.location.search.match(/debug=true/)
+const sl_debugging =
+  __guard__(window.location != null ? window.location.search : undefined, x =>
+    x.match(/debug=true/)
+  ) != null
+var sl_console_last_log = null
 window.sl_debugging = sl_debugging // make a global flag for debugging code
-window.sl_console = sl_debugging ? console : { log() {} }
+window.sl_console = {
+  log(...args) {
+    if (sl_debugging) {
+      sl_console_last_log = null
+      return console.log(...Array.from(args || []))
+    }
+  },
+  logOnce(...args) {
+    if (sl_debugging && args[0] !== sl_console_last_log) {
+      sl_console_last_log = args[0]
+      return console.log(...Array.from(args || []))
+    }
+  }
+}
 
 export default App
 

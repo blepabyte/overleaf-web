@@ -58,6 +58,7 @@ describe('ProjectLocator', function() {
       requires: {
         '../../models/Project': { Project },
         '../../models/User': { User: this.User },
+        '../Errors/Errors': Errors,
         './ProjectGetter': this.ProjectGetter,
         './ProjectHelper': this.ProjectHelper,
         'logger-sharelatex': {
@@ -373,7 +374,9 @@ describe('ProjectLocator', function() {
     })
 
     it('should take a file path and return the element for a nested document', function(done) {
-      const path = `${subFolder.name}/${secondSubFolder.name}/${subSubFile.name}`
+      const path = `${subFolder.name}/${secondSubFolder.name}/${
+        subSubFile.name
+      }`
       this.locator.findElementByPath(
         { project, path },
         (err, element, type) => {

@@ -1,6 +1,6 @@
 /* eslint-disable
     camelcase,
-    node/handle-callback-err,
+    handle-callback-err,
     max-len
 */
 // TODO: This file was created by bulk-decaffeinate.
@@ -15,7 +15,7 @@
  * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
  */
 
-const metrics = require('@overleaf/metrics')
+const metrics = require('metrics-sharelatex')
 const logger = require('logger-sharelatex')
 const _ = require('underscore')
 const DocumentUpdaterHandler = require('../DocumentUpdater/DocumentUpdaterHandler')

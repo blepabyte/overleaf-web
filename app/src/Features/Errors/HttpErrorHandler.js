@@ -139,12 +139,7 @@ module.exports = HttpErrorHandler = {
   },
 
   maintenance(req, res) {
-    // load balancer health checks require a success response for /
-    if (req.url === '/') {
-      res.status(200)
-    } else {
-      res.status(503)
-    }
+    res.status(503)
     let message = `${Settings.appName} is currently down for maintenance.`
     if (Settings.statusPageUrl) {
       message += ` Please check https://${Settings.statusPageUrl} for updates.`

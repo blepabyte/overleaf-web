@@ -68,7 +68,7 @@ describe('ConvertArchivedState', function() {
 
   beforeEach(function(done) {
     exec(
-      'CONNECT_DELAY=1 node scripts/convert_archived_state.js FIRST,SECOND',
+      'CONNECT_DELAY=1 node scripts/convert_archived_state.js',
       (error, stdout, stderr) => {
         console.log(stdout)
         console.error(stderr)

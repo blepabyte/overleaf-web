@@ -1,26 +1,35 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Dropdown, MenuItem, OverlayTrigger, Tooltip } from 'react-bootstrap'
+import { Dropdown, MenuItem } from 'react-bootstrap'
 import { useTranslation } from 'react-i18next'
 import Icon from '../../../shared/components/icon'
 
 function PreviewRecompileButton({
   compilerState: {
     isAutoCompileOn,
+    isClearingCache,
     isCompiling,
     isDraftModeOn,
     isSyntaxCheckOn
   },
+  onClearCache,
   onRecompile,
-  onRecompileFromScratch,
   onRunSyntaxCheckNow,
-  onStopCompilation,
   onSetAutoCompile,
   onSetDraftMode,
-  onSetSyntaxCheck,
-  showText
+  onSetSyntaxCheck
 }) {
   const { t } = useTranslation()
+
+  function handleRecompileFromScratch() {
+    onClearCache()
+      .then(() => {
+        onRecompile()
+      })
+      .catch(error => {
+        console.error(error)
+      })
+  }
 
   function handleSelectAutoCompileOn() {
     onSetAutoCompile(true)
@@ -46,48 +55,22 @@ function PreviewRecompileButton({
     onSetSyntaxCheck(false)
   }
 
-  let compilingProps = {}
-  let recompileProps = {}
-  function _hideText(keepAria) {
-    return {
-      'aria-hidden': !keepAria,
-      style: {
-        position: 'absolute',
-        right: '-100vw'
-      }
-    }
-  }
-
-  if (!showText) {
-    compilingProps = _hideText(isCompiling)
-    recompileProps = _hideText(!isCompiling)
-  } else if (isCompiling) {
-    recompileProps = _hideText()
-  } else {
-    compilingProps = _hideText()
-  }
-
-  const buttonElement = (
-    <Dropdown
-      id="pdf-recompile-dropdown"
-      className="btn-recompile-group toolbar-item"
-    >
+  return (
+    <Dropdown id="pdf-recompile-dropdown" className="btn-recompile-group">
       <button className="btn btn-recompile" onClick={onRecompile}>
         <Icon type="refresh" spin={isCompiling} />
-
-        <span id="text-compiling" className="toolbar-text" {...compilingProps}>
-          {t('compiling')}
-          &hellip;
-        </span>
-
-        <span id="text-recompile" className="toolbar-text" {...recompileProps}>
-          {t('recompile')}
-        </span>
+        {isCompiling || isClearingCache ? (
+          <span className="btn-recompile-label">
+            {t('compiling')}
+            &hellip;
+          </span>
+        ) : (
+          <span className="btn-recompile-label">{t('recompile')}</span>
+        )}
       </button>
       <Dropdown.Toggle
         aria-label={t('toggle_compile_options_menu')}
         className="btn btn-recompile"
-        bsStyle="success"
       />
       <Dropdown.Menu>
         <MenuItem header>{t('auto_compile')}</MenuItem>
@@ -121,59 +104,34 @@ function PreviewRecompileButton({
           <Icon type="" modifier="fw" />
           {t('run_syntax_check_now')}
         </MenuItem>
-        <MenuItem className={!isCompiling ? 'hidden' : ''} divider />
-        <MenuItem
-          onSelect={onStopCompilation}
-          className={!isCompiling ? 'hidden' : ''}
-          disabled={!isCompiling}
-          aria-disabled={!isCompiling}
-        >
-          {t('stop_compile')}
-        </MenuItem>
         <MenuItem divider />
         <MenuItem
-          onSelect={onRecompileFromScratch}
-          disabled={isCompiling}
-          aria-disabled={!!isCompiling}
+          onSelect={handleRecompileFromScratch}
+          disabled={isCompiling || isClearingCache}
+          aria-disabled={!!(isCompiling || isClearingCache)}
         >
           {t('recompile_from_scratch')}
         </MenuItem>
       </Dropdown.Menu>
     </Dropdown>
   )
-
-  return showText ? (
-    buttonElement
-  ) : (
-    <OverlayTrigger
-      placement="bottom"
-      overlay={
-        <Tooltip id="tooltip-download-pdf">
-          {isCompiling ? t('compiling') : t('recompile')}
-        </Tooltip>
-      }
-    >
-      {buttonElement}
-    </OverlayTrigger>
-  )
 }
 
 PreviewRecompileButton.propTypes = {
   compilerState: PropTypes.shape({
     isAutoCompileOn: PropTypes.bool.isRequired,
+    isClearingCache: PropTypes.bool.isRequired,
     isCompiling: PropTypes.bool.isRequired,
     isDraftModeOn: PropTypes.bool.isRequired,
     isSyntaxCheckOn: PropTypes.bool.isRequired,
     logEntries: PropTypes.object.isRequired
   }),
+  onClearCache: PropTypes.func.isRequired,
   onRecompile: PropTypes.func.isRequired,
-  onRecompileFromScratch: PropTypes.func.isRequired,
   onRunSyntaxCheckNow: PropTypes.func.isRequired,
   onSetAutoCompile: PropTypes.func.isRequired,
   onSetDraftMode: PropTypes.func.isRequired,
-  onSetSyntaxCheck: PropTypes.func.isRequired,
-  onStopCompilation: PropTypes.func.isRequired,
-  showText: PropTypes.bool.isRequired
+  onSetSyntaxCheck: PropTypes.func.isRequired
 }
 
 export default PreviewRecompileButton

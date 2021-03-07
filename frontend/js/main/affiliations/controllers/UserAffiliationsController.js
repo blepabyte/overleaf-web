@@ -9,7 +9,6 @@ import App from '../../../base'
 
 export default App.controller('UserAffiliationsController', function(
   $scope,
-  $rootScope,
   UserAffiliationsDataService,
   $q,
   $window
@@ -106,7 +105,9 @@ export default App.controller('UserAffiliationsController', function(
     _resetMakingRequestType()
     $scope.ui.isMakingRequest = true
     $scope.ui.isProcessing = true
-    $window.location.href = `${$scope.samlInitPath}?university_id=${institutionId}&auto=/user/settings&email=${email}`
+    $window.location.href = `${
+      $scope.samlInitPath
+    }?university_id=${institutionId}&auto=/user/settings&email=${email}`
   }
 
   $scope.selectUniversityManually = function() {
@@ -193,8 +194,6 @@ export default App.controller('UserAffiliationsController', function(
         email.default = false
       }
       userEmail.default = true
-      window.usersEmail = userEmail.email
-      $rootScope.usersEmail = userEmail.email
     })
 
   $scope.removeUserEmail = function(userEmail) {

@@ -40,6 +40,7 @@ describe('OneTimeTokenHandler', function() {
         crypto: {
           randomBytes: () => this.stubbedToken
         },
+        '../Errors/Errors': Errors,
         '../../infrastructure/mongodb': {
           db: (this.db = { tokens: {} })
         }

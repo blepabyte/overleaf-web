@@ -13,7 +13,7 @@
  */
 let ProjectUploadController
 const logger = require('logger-sharelatex')
-const metrics = require('@overleaf/metrics')
+const metrics = require('metrics-sharelatex')
 const fs = require('fs')
 const Path = require('path')
 const FileSystemImportManager = require('./FileSystemImportManager')

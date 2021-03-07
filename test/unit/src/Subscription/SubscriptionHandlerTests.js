@@ -63,6 +63,8 @@ describe('SubscriptionHandler', function() {
       attemptInvoiceCollection: sinon.stub().yields()
     }
 
+    this.DropboxHandler = { unlinkAccount: sinon.stub().callsArgWith(1) }
+
     this.SubscriptionUpdater = {
       syncSubscription: sinon.stub().yields(),
       startFreeTrial: sinon.stub().callsArgWith(1)
@@ -89,6 +91,7 @@ describe('SubscriptionHandler', function() {
         './LimitationsManager': this.LimitationsManager,
         '../Email/EmailHandler': this.EmailHandler,
         '../Dropbox/DropboxHandler': this.DropboxHandler,
+        '../../infrastructure/Events': (this.Events = { emit: sinon.stub() }),
         '../Analytics/AnalyticsManager': this.AnalyticsManager
       }
     })
@@ -306,6 +309,12 @@ describe('SubscriptionHandler', function() {
         this.RecurlyWrapper.cancelSubscription.called.should.equal(true)
         this.RecurlyWrapper.cancelSubscription
           .calledWith(this.subscription.recurlySubscription_id)
+          .should.equal(true)
+      })
+
+      it('should trigger the cancel subscription event', function() {
+        this.Events.emit
+          .calledWith('cancelSubscription', this.user._id)
           .should.equal(true)
       })
     })

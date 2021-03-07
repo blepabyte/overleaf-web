@@ -12,7 +12,6 @@ const Errors = require('../../../../app/src/Features/Errors/Errors')
 describe('UserEmailsController', function() {
   beforeEach(function() {
     this.req = new MockRequest()
-    this.req.sessionID = Math.random().toString()
     this.res = new MockResponse()
     this.next = sinon.stub()
     this.user = { _id: 'mock-user-id', email: 'example@overleaf.com' }
@@ -24,15 +23,11 @@ describe('UserEmailsController', function() {
       }
     }
     this.AuthenticationController = {
-      getSessionUser: sinon.stub().returns(this.user),
       getLoggedInUserId: sinon.stub().returns(this.user._id),
       setInSessionUser: sinon.stub()
     }
     this.Features = {
       hasFeature: sinon.stub()
-    }
-    this.UserSessionsManager = {
-      revokeAllUserSessions: sinon.stub().yields()
     }
     this.UserUpdater = {
       addEmailAddress: sinon.stub(),
@@ -63,7 +58,6 @@ describe('UserEmailsController', function() {
         '../Authentication/AuthenticationController': this
           .AuthenticationController,
         '../../infrastructure/Features': this.Features,
-        './UserSessionsManager': this.UserSessionsManager,
         './UserGetter': this.UserGetter,
         './UserUpdater': this.UserUpdater,
         '../Email/EmailHandler': (this.EmailHandler = {
@@ -79,11 +73,11 @@ describe('UserEmailsController', function() {
         }),
         '../Institutions/InstitutionsAPI': this.InstitutionsAPI,
         '../Errors/HttpErrorHandler': this.HttpErrorHandler,
-        'logger-sharelatex': (this.logger = {
+        '../Errors/Errors': Errors,
+        'logger-sharelatex': {
           log() {},
-          warn: sinon.stub(),
           err() {}
-        })
+        }
       }
     })
   })
@@ -322,42 +316,6 @@ describe('UserEmailsController', function() {
           done()
         }
       })
-    })
-
-    it('should reset the users other sessions', function(done) {
-      this.UserUpdater.setDefaultEmailAddress.yields()
-
-      this.res.callback = () => {
-        expect(
-          this.UserSessionsManager.revokeAllUserSessions
-        ).to.have.been.calledWith(this.user, [this.req.sessionID])
-        done()
-      }
-
-      this.UserEmailsController.setDefault(this.req, this.res, done)
-    })
-
-    it('handles error from revoking sessions and returns 200', function(done) {
-      this.UserUpdater.setDefaultEmailAddress.yields()
-      const redisError = new Error('redis error')
-      this.UserSessionsManager.revokeAllUserSessions = sinon
-        .stub()
-        .yields(redisError)
-
-      this.res.callback = () => {
-        expect(this.res.statusCode).to.equal(200)
-
-        // give revoke process time to run
-        setTimeout(() => {
-          expect(this.logger.warn).to.have.been.calledWith(
-            sinon.match({ err: redisError }),
-            'failed revoking secondary sessions after changing default email'
-          )
-          done()
-        })
-      }
-
-      this.UserEmailsController.setDefault(this.req, this.res, done)
     })
   })
 

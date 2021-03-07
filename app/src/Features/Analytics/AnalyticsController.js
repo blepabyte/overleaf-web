@@ -1,5 +1,5 @@
-const metrics = require('@overleaf/metrics')
 const AnalyticsManager = require('./AnalyticsManager')
+const Errors = require('../Errors/Errors')
 const AuthenticationController = require('../Authentication/AuthenticationController')
 const InstitutionsAPI = require('../Institutions/InstitutionsAPI')
 const GeoIpLookup = require('../../infrastructure/GeoIpLookup')
@@ -8,7 +8,7 @@ const Features = require('../../infrastructure/Features')
 module.exports = {
   updateEditingSession(req, res, next) {
     if (!Features.hasFeature('analytics')) {
-      return res.sendStatus(202)
+      return res.sendStatus(204)
     }
     const userId = AuthenticationController.getLoggedInUserId(req)
     const { projectId } = req.params
@@ -16,25 +16,30 @@ module.exports = {
 
     if (userId) {
       GeoIpLookup.getDetails(req.ip, function(err, geoDetails) {
-        if (err) {
-          metrics.inc('analytics_geo_ip_lookup_errors')
-        } else if (geoDetails && geoDetails.country_code) {
+        if (!err && geoDetails && geoDetails.country_code) {
           countryCode = geoDetails.country_code
         }
-        AnalyticsManager.updateEditingSession(userId, projectId, countryCode)
+        AnalyticsManager.updateEditingSession(
+          userId,
+          projectId,
+          countryCode,
+          error => respondWith(error, res, next)
+        )
       })
+    } else {
+      res.sendStatus(204)
     }
-    res.sendStatus(202)
   },
 
   recordEvent(req, res, next) {
     if (!Features.hasFeature('analytics')) {
-      return res.sendStatus(202)
+      return res.sendStatus(204)
     }
     const userId =
       AuthenticationController.getLoggedInUserId(req) || req.sessionID
-    AnalyticsManager.recordEvent(userId, req.params.event, req.body)
-    res.sendStatus(202)
+    AnalyticsManager.recordEvent(userId, req.params.event, req.body, error =>
+      respondWith(error, res, next)
+    )
   },
 
   licences(req, res, next) {
@@ -65,5 +70,16 @@ module.exports = {
         res.send(licences)
       }
     )
+  }
+}
+
+var respondWith = function(error, res, next) {
+  if (error instanceof Errors.ServiceNotConfiguredError) {
+    // ignore, no-op
+    res.sendStatus(204)
+  } else if (error) {
+    next(error)
+  } else {
+    res.sendStatus(204)
   }
 }

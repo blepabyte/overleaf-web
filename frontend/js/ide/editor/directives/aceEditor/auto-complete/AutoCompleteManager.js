@@ -244,7 +244,7 @@ class AutoCompleteManager {
     // NOTE: this is also the case when a user backspaces over a highlighted
     // region
     if (
-      change.origin !== 'remote' &&
+      !change.remote &&
       change.action === 'insert' &&
       end.row === cursorPosition.row &&
       end.column === cursorPosition.column + 1
@@ -261,8 +261,7 @@ class AutoCompleteManager {
     const match = change.lines[0].match(/\\(\w+){}/)
     if (
       change.action === 'insert' &&
-      match &&
-      match[1] &&
+      (match && match[1]) &&
       // eslint-disable-next-line max-len
       /(begin|end|[a-zA-Z]*ref|usepackage|[a-z]*cite[a-z]*|input|include)/.test(
         match[1]

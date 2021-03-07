@@ -2,14 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import classNames from 'classnames'
 
-function Icon({
-  type,
-  spin,
-  modifier,
-  classes = {},
-  accessibilityLabel,
-  children
-}) {
+function Icon({ type, spin, modifier, classes = {}, accessibilityLabel }) {
   const iconClassName = classNames(
     'fa',
     `fa-${type}`,
@@ -22,9 +15,7 @@ function Icon({
 
   return (
     <>
-      <i className={iconClassName} aria-hidden="true">
-        {children}
-      </i>
+      <i className={iconClassName} aria-hidden="true" />
       {accessibilityLabel ? (
         <span className="sr-only">{accessibilityLabel}</span>
       ) : null}
@@ -39,11 +30,7 @@ Icon.propTypes = {
   classes: PropTypes.exact({
     icon: PropTypes.string
   }),
-  accessibilityLabel: PropTypes.string,
-  children: PropTypes.oneOfType([
-    PropTypes.arrayOf(PropTypes.node),
-    PropTypes.node
-  ])
+  accessibilityLabel: PropTypes.string
 }
 
 export default Icon

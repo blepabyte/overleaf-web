@@ -80,7 +80,9 @@ App.directive('complexPassword', () => ({
       }
       if (opts.length.min != null && modelValue.length < opts.length.min) {
         isValid = false
-        scope.complexPasswordErrorMessage = `Password too short, minimum ${opts.length.min}`
+        scope.complexPasswordErrorMessage = `Password too short, minimum ${
+          opts.length.min
+        }`
       }
       ngModelCtrl.$setValidity('complexPassword', isValid)
       return modelValue

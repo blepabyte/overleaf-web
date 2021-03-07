@@ -57,6 +57,8 @@ describe('UserController', function() {
         setUserPassword: sinon.stub()
       }
     }
+    this.ReferalAllocator = { allocate: sinon.stub() }
+    this.SubscriptionDomainHandler = { autoAllocate: sinon.stub() }
     this.UserUpdater = {
       changeEmailAddress: sinon.stub(),
       promises: {
@@ -81,21 +83,11 @@ describe('UserController', function() {
       unprocessableEntity: sinon.stub(),
       legacyInternal: sinon.stub()
     }
-
-    this.UrlHelper = {
-      getSafeRedirectPath: sinon.stub()
-    }
-    this.UrlHelper.getSafeRedirectPath
-      .withArgs('https://evil.com')
-      .returns(undefined)
-    this.UrlHelper.getSafeRedirectPath.returnsArg(0)
-
     this.UserController = SandboxedModule.require(modulePath, {
       globals: {
         console: console
       },
       requires: {
-        '../Helpers/UrlHelper': this.UrlHelper,
         './UserGetter': this.UserGetter,
         './UserDeleter': this.UserDeleter,
         './UserUpdater': this.UserUpdater,
@@ -110,6 +102,9 @@ describe('UserController', function() {
         '../../infrastructure/Features': (this.Features = {
           hasFeature: sinon.stub()
         }),
+        '../Referal/ReferalAllocator': this.ReferalAllocator,
+        '../Subscription/SubscriptionDomainHandler': this
+          .SubscriptionDomainHandler,
         './UserAuditLogHandler': (this.UserAuditLogHandler = {
           promises: {
             addEntry: sinon.stub().resolves()
@@ -125,9 +120,10 @@ describe('UserController', function() {
           err() {},
           error: sinon.stub()
         }),
-        '@overleaf/metrics': {
+        'metrics-sharelatex': {
           inc() {}
         },
+        '../Errors/Errors': Errors,
         '@overleaf/o-error': OError,
         '../Email/EmailHandler': (this.EmailHandler = {
           sendEmail: sinon.stub(),
@@ -521,16 +517,6 @@ describe('UserController', function() {
       this.UserController.logout(this.req, this.res)
     })
 
-    it('should redirect after logout, but not to evil.com', function(done) {
-      this.req.body.redirect = 'https://evil.com'
-      this.req.session.destroy = sinon.stub().callsArgWith(0)
-      this.res.redirect = url => {
-        url.should.equal('/login')
-        done()
-      }
-      this.UserController.logout(this.req, this.res)
-    })
-
     it('should redirect to login after logout when no redirect set', function(done) {
       this.req.session.destroy = sinon.stub().callsArgWith(0)
       this.res.redirect = url => {
@@ -592,7 +578,9 @@ describe('UserController', function() {
           this.EmailHandler.promises.sendEmail.callCount.should.equal(1)
           const expectedArg = {
             to: this.user.email,
-            actionDescribed: `active sessions were cleared on your account ${this.user.email}`,
+            actionDescribed: `active sessions were cleared on your account ${
+              this.user.email
+            }`,
             action: 'active sessions cleared'
           }
           const emailCall = this.EmailHandler.promises.sendEmail.lastCall
@@ -676,7 +664,7 @@ describe('UserController', function() {
       it('should set the new password if they do match', function(done) {
         this.res.json.callsFake(() => {
           this.AuthenticationManager.promises.setUserPassword.should.have.been.calledWith(
-            this.user,
+            this.user._id,
             'newpass'
           )
           done()
@@ -704,7 +692,9 @@ describe('UserController', function() {
         this.res.json.callsFake(() => {
           const expectedArg = {
             to: this.user.email,
-            actionDescribed: `your password has been changed on your account ${this.user.email}`,
+            actionDescribed: `your password has been changed on your account ${
+              this.user.email
+            }`,
             action: 'password changed'
           }
           const emailCall = this.EmailHandler.sendEmail.lastCall
@@ -759,12 +749,9 @@ describe('UserController', function() {
       })
 
       it('it should not set the new password if it is invalid', function(done) {
-        // this.AuthenticationManager.validatePassword = sinon
-        //   .stub()
-        //   .returns({ message: 'validation-error' })
-        const err = new Error('bad')
-        err.name = 'InvalidPasswordError'
-        this.AuthenticationManager.promises.setUserPassword.rejects(err)
+        this.AuthenticationManager.validatePassword = sinon
+          .stub()
+          .returns({ message: 'validation-error' })
         this.AuthenticationManager.promises.authenticate.resolves({})
         this.req.body = {
           newPassword1: 'newpass',
@@ -774,10 +761,10 @@ describe('UserController', function() {
           expect(this.HttpErrorHandler.badRequest).to.have.been.calledWith(
             this.req,
             this.res,
-            err.message
+            'validation-error'
           )
           this.AuthenticationManager.promises.setUserPassword.callCount.should.equal(
-            1
+            0
           )
           done()
         })
@@ -797,7 +784,7 @@ describe('UserController', function() {
           this.UserController.changePassword(this.req, this.res, error => {
             expect(error).to.be.instanceof(Error)
             this.AuthenticationManager.promises.setUserPassword.callCount.should.equal(
-              1
+              0
             )
             done()
           })

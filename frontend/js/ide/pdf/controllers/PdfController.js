@@ -3,7 +3,6 @@ import HumanReadableLogs from '../../human-readable-logs/HumanReadableLogs'
 import BibLogParser from 'libs/bib-log-parser'
 import PreviewPane from '../../../features/preview/components/preview-pane'
 import { react2angular } from 'react2angular'
-import { rootContext } from '../../../shared/context/root-context'
 import 'ace/ace'
 const AUTO_COMPILE_MAX_WAIT = 5000
 // We add a 1 second debounce to sending user changes to server if they aren't
@@ -30,17 +29,10 @@ App.controller('PdfController', function(
   $scope.pdf.view = $scope.pdf.url ? 'pdf' : 'uncompiled'
   $scope.pdf.clearingCache = false
   $scope.shouldShowLogs = false
+  $scope.wikiEnabled = window.wikiEnabled
 
   // view logic to check whether the files dropdown should "drop up" or "drop down"
   $scope.shouldDropUp = false
-
-  // Exposed methods for React layout handling
-  $scope.setPdfSplitLayout = function() {
-    $scope.$applyAsync(() => $scope.switchToSideBySideLayout('editor'))
-  }
-  $scope.setPdfFullLayout = function() {
-    $scope.$applyAsync(() => $scope.switchToFlatLayout('pdf'))
-  }
 
   const logsContainerEl = document.querySelector('.pdf-logs')
   const filesDropdownEl =
@@ -88,6 +80,12 @@ App.controller('PdfController', function(
     } else {
       return ''
     }
+  }
+
+  $scope.stripHTMLFromString = function(htmlStr) {
+    const tmp = document.createElement('DIV')
+    tmp.innerHTML = htmlStr
+    return tmp.textContent || tmp.innerText || ''
   }
 
   $scope.$on('project:joined', () => {
@@ -271,7 +269,7 @@ App.controller('PdfController', function(
     const url = `/project/${$scope.project_id}/compile`
     const params = {}
     if (options.isAutoCompileOnLoad || options.isAutoCompileOnChange) {
-      params.auto_compile = true
+      params['auto_compile'] = true
     }
     // if the previous run was a check, clear the error logs
     if ($scope.check) {
@@ -316,11 +314,16 @@ App.controller('PdfController', function(
     )
   }
 
-  function buildPdfDownloadUrl(pdfDownloadDomain, url) {
-    if (pdfDownloadDomain) {
-      return `${pdfDownloadDomain}${url}`
+  function buildPdfDownloadUrl(pdfDownloadDomain, path) {
+    // we only download builds from compiles server for security reasons
+    if (
+      pdfDownloadDomain != null &&
+      path != null &&
+      path.indexOf('build') !== -1
+    ) {
+      return `${pdfDownloadDomain}${path}`
     } else {
-      return url
+      return path
     }
   }
 
@@ -342,9 +345,6 @@ App.controller('PdfController', function(
     $scope.pdf.failedCheck = false
     $scope.pdf.compileInProgress = false
     $scope.pdf.autoCompileDisabled = false
-    if (window.showNewLogsUI) {
-      $scope.clsiErrors = {}
-    }
 
     // make a cache to look up files by name
     const fileByPath = {}
@@ -365,30 +365,47 @@ App.controller('PdfController', function(
       ide.clsiServerId = qs.clsiserverid = response.clsiServerId
     }
 
-    // TODO(das7pad): drop this hack once 2747f0d40af8729304 has landed in clsi
-    if (response.status === 'success' && !fileByPath['output.pdf']) {
-      response.status = 'failure'
-    }
-
     if (response.status === 'success') {
       $scope.pdf.view = 'pdf'
       $scope.shouldShowLogs = false
-      $scope.pdf.lastCompileTimestamp = Date.now()
-      $scope.pdf.validation = {}
-      $scope.pdf.url = buildPdfDownloadUrl(
-        pdfDownloadDomain,
-        fileByPath['output.pdf'].url
-      )
+
+      // define the base url. if the pdf file has a build number, pass it to the clsi in the url
+      if (fileByPath['output.pdf'] && fileByPath['output.pdf'].url) {
+        $scope.pdf.url = buildPdfDownloadUrl(
+          pdfDownloadDomain,
+          fileByPath['output.pdf'].url
+        )
+      } else if (fileByPath['output.pdf'] && fileByPath['output.pdf'].build) {
+        const { build } = fileByPath['output.pdf']
+        $scope.pdf.url = buildPdfDownloadUrl(
+          pdfDownloadDomain,
+          `/project/${$scope.project_id}/build/${build}/output/output.pdf`
+        )
+      } else {
+        $scope.pdf.url = buildPdfDownloadUrl(
+          pdfDownloadDomain,
+          `/project/${$scope.project_id}/output/output.pdf`
+        )
+      }
+      // check if we need to bust cache (build id is unique so don't need it in that case)
+      if (!(fileByPath['output.pdf'] && fileByPath['output.pdf'].build)) {
+        qs.cache_bust = `${Date.now()}`
+      }
       // convert the qs hash into a query string and append it
       $scope.pdf.url += createQueryString(qs)
 
       // Save all downloads as files
       qs.popupDownload = true
 
-      const { build: buildId } = fileByPath['output.pdf']
+      // Pass build id to download if we have it
+      let buildId = null
+      if (fileByPath['output.pdf'] && fileByPath['output.pdf'].build) {
+        buildId = fileByPath['output.pdf'].build
+      }
       $scope.pdf.downloadUrl =
-        `/download/project/${$scope.project_id}/build/${buildId}/output/output.pdf` +
-        createQueryString(qs)
+        `/download/project/${$scope.project_id}${
+          buildId ? '/build/' + buildId : ''
+        }/output/output.pdf` + createQueryString(qs)
       fetchLogs(fileByPath, { pdfDownloadDomain })
     } else if (response.status === 'timedout') {
       $scope.pdf.view = 'errors'
@@ -412,7 +429,7 @@ App.controller('PdfController', function(
       ['validation-fail', 'validation-pass'].includes(response.status)
     ) {
       $scope.pdf.view = 'pdf'
-      $scope.pdf.url = lastPdfUrl
+      $scope.pdf.url = buildPdfDownloadUrl(pdfDownloadDomain, lastPdfUrl)
       $scope.shouldShowLogs = true
       if (response.status === 'validation-fail') {
         $scope.pdf.failedCheck = true
@@ -422,7 +439,7 @@ App.controller('PdfController', function(
     } else if (response.status === 'exited') {
       $scope.pdf.view = 'pdf'
       $scope.pdf.compileExited = true
-      $scope.pdf.url = lastPdfUrl
+      $scope.pdf.url = buildPdfDownloadUrl(pdfDownloadDomain, lastPdfUrl)
       $scope.shouldShowLogs = true
       fetchLogs(fileByPath, { pdfDownloadDomain })
     } else if (response.status === 'autocompile-backoff') {
@@ -468,33 +485,6 @@ App.controller('PdfController', function(
       $scope.pdf.error = true
     }
 
-    if (window.showNewLogsUI) {
-      $scope.pdf.compileFailed = false
-      // `$scope.clsiErrors` stores the error states nested within `$scope.pdf`
-      // for use with React's <PreviewPane errors={$scope.clsiErrors}/>
-      $scope.clsiErrors = Object.assign(
-        {},
-        $scope.pdf.error ? { error: true } : null,
-        $scope.pdf.renderingError ? { renderingError: true } : null,
-        $scope.pdf.clsiMaintenance ? { clsiMaintenance: true } : null,
-        $scope.pdf.clsiUnavailable ? { clsiUnavailable: true } : null,
-        $scope.pdf.tooRecentlyCompiled ? { tooRecentlyCompiled: true } : null,
-        $scope.pdf.compileTerminated ? { compileTerminated: true } : null,
-        $scope.pdf.rateLimited ? { rateLimited: true } : null,
-        $scope.pdf.compileInProgress ? { compileInProgress: true } : null,
-        $scope.pdf.timedout ? { timedout: true } : null,
-        $scope.pdf.autoCompileDisabled ? { autoCompileDisabled: true } : null
-      )
-
-      if (
-        $scope.pdf.view === 'errors' ||
-        $scope.pdf.view === 'validation-problems'
-      ) {
-        $scope.shouldShowLogs = true
-        $scope.pdf.compileFailed = true
-      }
-    }
-
     const IGNORE_FILES = ['output.fls', 'output.fdb_latexmk']
     $scope.pdf.outputFiles = []
 
@@ -515,10 +505,10 @@ App.controller('PdfController', function(
           name: isOutputFile
             ? `${file.path.replace(/^output\./, '')} file`
             : file.path,
-          url: file.url + createQueryString(qs),
-          main: !!isOutputFile,
-          fileName: file.path,
-          type: file.type
+          url:
+            `/project/${$scope.project_id}/output/${file.path}` +
+            createQueryString(qs),
+          main: !!isOutputFile
         })
       }
     }
@@ -531,8 +521,6 @@ App.controller('PdfController', function(
 
   function fetchLogs(fileByPath, options) {
     let blgFile, chktexFile, logFile
-    $scope.pdf.logEntries = {}
-
     if (options != null ? options.validation : undefined) {
       chktexFile = fileByPath['output.chktex']
     } else {
@@ -543,12 +531,26 @@ App.controller('PdfController', function(
     function getFile(name, file) {
       const opts = {
         method: 'GET',
-        url: buildPdfDownloadUrl(options.pdfDownloadDomain, file.url),
         params: {
           compileGroup: ide.compileGroup,
           clsiserverid: ide.clsiServerId
         }
       }
+      if (file && file.url) {
+        // FIXME clean this up when we have file.urls out consistently
+        opts.url = file.url
+      } else if (file && file.build) {
+        opts.url = `/project/${$scope.project_id}/build/${
+          file.build
+        }/output/${name}`
+      } else {
+        opts.url = `/project/${$scope.project_id}/output/${name}`
+      }
+      // check if we need to bust cache (build id is unique so don't need it in that case)
+      if (!(file && file.build)) {
+        opts.params.cache_bust = `${Date.now()}`
+      }
+      opts.url = buildPdfDownloadUrl(options.pdfDownloadDomain, opts.url)
       return $http(opts)
     }
 
@@ -556,20 +558,17 @@ App.controller('PdfController', function(
     const logEntries = {
       all: [],
       errors: [],
-      warnings: [],
-      typesetting: []
+      warnings: []
     }
 
     function accumulateResults(newEntries) {
-      for (let key of ['all', 'errors', 'warnings', 'typesetting']) {
-        if (newEntries[key]) {
-          if (newEntries.type != null) {
-            for (let entry of newEntries[key]) {
-              entry.type = newEntries.type
-            }
+      for (let key of ['all', 'errors', 'warnings']) {
+        if (newEntries.type != null) {
+          for (let entry of newEntries[key]) {
+            entry.type = newEntries.type
           }
-          logEntries[key] = logEntries[key].concat(newEntries[key])
         }
+        logEntries[key] = logEntries[key].concat(newEntries[key])
       }
     }
 
@@ -580,7 +579,7 @@ App.controller('PdfController', function(
         ignoreDuplicates: true
       })
       const all = [].concat(errors, warnings, typesetting)
-      accumulateResults({ all, errors, warnings, typesetting })
+      accumulateResults({ all, errors, warnings })
     }
 
     function processChkTex(log) {
@@ -768,11 +767,6 @@ App.controller('PdfController', function(
         $scope.pdf.renderingError = false
         $scope.pdf.error = true
         $scope.pdf.view = 'errors'
-        if (window.showNewLogsUI) {
-          $scope.clsiErrors = { error: true }
-          $scope.shouldShowLogs = true
-          $scope.pdf.compileFailed = true
-        }
       })
       .finally(() => {
         $scope.lastFinishedCompileAt = Date.now()
@@ -807,11 +801,6 @@ App.controller('PdfController', function(
     $scope.pdf.clearingCache = true
     const deferred = $q.defer()
 
-    // disable various download buttons
-    $scope.pdf.url = null
-    $scope.pdf.downloadUrl = null
-    $scope.pdf.outputFiles = []
-
     $http({
       url: `/project/${$scope.project_id}/output`,
       method: 'DELETE',
@@ -836,19 +825,6 @@ App.controller('PdfController', function(
         return deferred.reject(error)
       })
     return deferred.promise
-  }
-
-  $scope.recompileFromScratch = function() {
-    $scope.pdf.compiling = true
-    return $scope
-      .clearCache()
-      .then(() => {
-        $scope.pdf.compiling = false
-        $scope.recompile()
-      })
-      .catch(error => {
-        console.error(error)
-      })
   }
 
   $scope.toggleLogs = function() {
@@ -905,25 +881,6 @@ App.controller('PdfController', function(
   $scope.runSyntaxCheckNow = function() {
     $scope.$applyAsync(function() {
       $scope.recompile({ check: true })
-    })
-  }
-
-  $scope.openInEditor = function(entry) {
-    let column, line
-    eventTracking.sendMBOnce('logs-jump-to-location-once')
-    const entity = ide.fileTreeManager.findEntityByPath(entry.file)
-    if (entity == null || entity.type !== 'doc') {
-      return
-    }
-    if (entry.line != null) {
-      line = entry.line
-    }
-    if (entry.column != null) {
-      column = entry.column
-    }
-    ide.editorManager.openDoc(entity, {
-      gotoLine: line,
-      gotoColumn: column
     })
   }
 })
@@ -1096,6 +1053,27 @@ App.controller('PdfSynctexController', function($scope, synctex, ide) {
   }
 })
 
+App.controller('PdfLogEntryController', function($scope, ide, eventTracking) {
+  $scope.openInEditor = function(entry) {
+    let column, line
+    eventTracking.sendMBOnce('logs-jump-to-location-once')
+    const entity = ide.fileTreeManager.findEntityByPath(entry.file)
+    if (entity == null || entity.type !== 'doc') {
+      return
+    }
+    if (entry.line != null) {
+      line = entry.line
+    }
+    if (entry.column != null) {
+      column = entry.column
+    }
+    ide.editorManager.openDoc(entity, {
+      gotoLine: line,
+      gotoColumn: column
+    })
+  }
+})
+
 App.controller('ClearCacheModalController', function($scope, $modalInstance) {
   $scope.state = { error: false, inflight: false }
 
@@ -1115,11 +1093,6 @@ App.controller('ClearCacheModalController', function($scope, $modalInstance) {
 
   $scope.cancel = () => $modalInstance.dismiss('cancel')
 })
+
 // Wrap React component as Angular component. Only needed for "top-level" component
-App.component(
-  'previewPane',
-  react2angular(
-    rootContext.use(PreviewPane),
-    Object.keys(PreviewPane.propTypes)
-  )
-)
+App.component('previewPane', react2angular(PreviewPane))

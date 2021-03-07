@@ -5,8 +5,6 @@ const UserModel = require('../../../../app/src/models/User').User
 const UserUpdater = require('../../../../app/src/Features/User/UserUpdater')
 const AuthenticationManager = require('../../../../app/src/Features/Authentication/AuthenticationManager')
 const { promisify } = require('util')
-const fs = require('fs')
-const Path = require('path')
 
 let count = 0
 
@@ -22,7 +20,7 @@ class User {
       }
     ]
     this.email = this.emails[0].email
-    this.password = `a-terrible-secret-${count}`
+    this.password = `acceptance-test-${count}-password`
     count++
     this.jar = request.jar()
     this.request = request.defaults({
@@ -113,17 +111,21 @@ class User {
         return callback(error)
       }
       this.setExtraAttributes(user)
-      AuthenticationManager.setUserPasswordInV2(user, this.password, error => {
-        if (error != null) {
-          return callback(error)
-        }
-        this.mongoUpdate({ $set: { emails: this.emails } }, error => {
+      AuthenticationManager.setUserPasswordInV2(
+        user._id,
+        this.password,
+        error => {
           if (error != null) {
             return callback(error)
           }
-          callback(null, this.password)
-        })
-      })
+          this.mongoUpdate({ $set: { emails: this.emails } }, error => {
+            if (error != null) {
+              return callback(error)
+            }
+            callback(null, this.password)
+          })
+        }
+      )
     })
   }
 
@@ -133,20 +135,16 @@ class User {
       const value = features[key]
       update[`features.${key}`] = value
     }
-    UserModel.updateOne({ _id: this.id }, update, callback)
+    UserModel.update({ _id: this.id }, update, callback)
   }
 
   setFeaturesOverride(featuresOverride, callback) {
     const update = { $push: { featuresOverrides: featuresOverride } }
-    UserModel.updateOne({ _id: this.id }, update, callback)
+    UserModel.update({ _id: this.id }, update, callback)
   }
 
   setOverleafId(overleafId, callback) {
-    UserModel.updateOne(
-      { _id: this.id },
-      { 'overleaf.id': overleafId },
-      callback
-    )
+    UserModel.update({ _id: this.id }, { 'overleaf.id': overleafId }, callback)
   }
 
   logout(callback) {
@@ -330,7 +328,7 @@ class User {
               name,
               options,
               response.statusCode,
-              response.headers.location,
+              response.headers['location'],
               body
             ])
           )
@@ -401,112 +399,6 @@ class User {
         }
       )
     })
-  }
-
-  uploadFileInProject(projectId, folderId, file, name, contentType, callback) {
-    const imageFile = fs.createReadStream(
-      Path.resolve(Path.join(__dirname, '..', '..', 'files', file))
-    )
-
-    this.request.post(
-      {
-        uri: `project/${projectId}/upload`,
-        qs: {
-          folder_id: String(folderId)
-        },
-        formData: {
-          qqfile: {
-            value: imageFile,
-            options: {
-              filename: name,
-              contentType: contentType
-            }
-          }
-        }
-      },
-      (error, res, body) => {
-        if (error) {
-          return callback(error)
-        }
-        if (res.statusCode < 200 || res.statusCode >= 300) {
-          return callback(new Error(`failed to upload file ${res.statusCode}`))
-        }
-
-        callback(null, JSON.parse(body).entity_id)
-      }
-    )
-  }
-
-  uploadExampleFileInProject(projectId, folderId, name, callback) {
-    this.uploadFileInProject(
-      projectId,
-      folderId,
-      '1pixel.png',
-      name,
-      'image/png',
-      callback
-    )
-  }
-
-  moveItemInProject(projectId, type, itemId, folderId, callback) {
-    this.request.post(
-      {
-        uri: `project/${projectId}/${type}/${itemId}/move`,
-        json: {
-          folder_id: folderId
-        }
-      },
-      (error, res) => {
-        if (error) {
-          return callback(error)
-        }
-        if (res.statusCode < 200 || res.statusCode >= 300) {
-          return callback(new Error(`failed to move ${type} ${res.statusCode}`))
-        }
-
-        callback()
-      }
-    )
-  }
-
-  renameItemInProject(projectId, type, itemId, name, callback) {
-    this.request.post(
-      {
-        uri: `project/${projectId}/${type}/${itemId}/rename`,
-        json: {
-          name: name
-        }
-      },
-      (error, res) => {
-        if (error) {
-          return callback(error)
-        }
-        if (res.statusCode < 200 || res.statusCode >= 300) {
-          return callback(
-            new Error(`failed to rename ${type} ${res.statusCode}`)
-          )
-        }
-
-        callback()
-      }
-    )
-  }
-
-  deleteItemInProject(projectId, type, itemId, callback) {
-    this.request.delete(
-      `project/${projectId}/${type}/${itemId}`,
-      (error, res) => {
-        if (error) {
-          return callback(error)
-        }
-        if (res.statusCode < 200 || res.statusCode >= 300) {
-          return callback(
-            new Error(`failed to delete ${type} ${res.statusCode}`)
-          )
-        }
-        callback()
-      }
-    )
   }
 
   addUserToProject(projectId, user, privileges, callback) {
@@ -693,7 +585,9 @@ class User {
       } else {
         callback(
           new Error(
-            `unexpected status code from /user/personal_info: ${response.statusCode}`
+            `unexpected status code from /user/personal_info: ${
+              response.statusCode
+            }`
           )
         )
       }
@@ -728,7 +622,7 @@ class User {
   }
 
   setV1Id(v1Id, callback) {
-    UserModel.updateOne(
+    UserModel.update(
       {
         _id: this._id
       },

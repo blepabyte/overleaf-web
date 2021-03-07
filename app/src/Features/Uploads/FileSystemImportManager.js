@@ -71,8 +71,7 @@ async function addFolder(userId, projectId, folderId, name, path, replace) {
     projectId,
     folderId,
     name,
-    'upload',
-    userId
+    'upload'
   )
   await addFolderContents(userId, projectId, newFolder._id, path, replace)
   return newFolder

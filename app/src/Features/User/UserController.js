@@ -5,7 +5,7 @@ const { User } = require('../../models/User')
 const NewsletterManager = require('../Newsletter/NewsletterManager')
 const UserRegistrationHandler = require('./UserRegistrationHandler')
 const logger = require('logger-sharelatex')
-const metrics = require('@overleaf/metrics')
+const metrics = require('metrics-sharelatex')
 const AuthenticationManager = require('../Authentication/AuthenticationManager')
 const AuthenticationController = require('../Authentication/AuthenticationController')
 const Features = require('../../infrastructure/Features')
@@ -23,7 +23,9 @@ const { expressify } = require('../../util/promises')
 async function _sendSecurityAlertClearedSessions(user) {
   const emailOptions = {
     to: user.email,
-    actionDescribed: `active sessions were cleared on your account ${user.email}`,
+    actionDescribed: `active sessions were cleared on your account ${
+      user.email
+    }`,
     action: 'active sessions cleared'
   }
   try {
@@ -40,7 +42,9 @@ async function _sendSecurityAlertClearedSessions(user) {
 function _sendSecurityAlertPasswordChanged(user) {
   const emailOptions = {
     to: user.email,
-    actionDescribed: `your password has been changed on your account ${user.email}`,
+    actionDescribed: `your password has been changed on your account ${
+      user.email
+    }`,
     action: 'password changed'
   }
   EmailHandler.sendEmail('securityAlert', emailOptions, error => {
@@ -81,24 +85,23 @@ async function changePassword(req, res, next) {
       req.i18n.translate('password_change_passwords_do_not_match')
     )
   }
-
-  try {
-    await AuthenticationManager.promises.setUserPassword(
-      user,
-      req.body.newPassword1
-    )
-  } catch (error) {
-    if (error.name === 'InvalidPasswordError') {
-      return HttpErrorHandler.badRequest(req, res, error.message)
-    } else {
-      throw error
-    }
+  const validationError = AuthenticationManager.validatePassword(
+    req.body.newPassword1
+  )
+  if (validationError != null) {
+    return HttpErrorHandler.badRequest(req, res, validationError.message)
   }
+
   await UserAuditLogHandler.promises.addEntry(
     user._id,
     'update-password',
     user._id,
     req.ip
+  )
+
+  await AuthenticationManager.promises.setUserPassword(
+    user._id,
+    req.body.newPassword1
   )
 
   // no need to wait, errors are logged and not passed back

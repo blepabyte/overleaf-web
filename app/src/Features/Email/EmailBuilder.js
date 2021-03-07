@@ -3,10 +3,10 @@ const settings = require('settings-sharelatex')
 const moment = require('moment')
 const EmailMessageHelper = require('./EmailMessageHelper')
 const StringHelper = require('../Helpers/StringHelper')
-const BaseWithHeaderEmailLayout = require('./Layouts/BaseWithHeaderEmailLayout')
+const BaseWithHeaderEmailLayout = require(`./Layouts/BaseWithHeaderEmailLayout`)
 const SpamSafe = require('./SpamSafe')
 const ctaEmailBody = require('./Bodies/cta-email')
-const NoCTAEmailBody = require('./Bodies/NoCTAEmailBody')
+const NoCTAEmailBody = require(`./Bodies/NoCTAEmailBody`)
 
 function _emailBodyPlainText(content, opts, ctaEmail) {
   let emailBody = `${content.greeting(opts, true)}`
@@ -28,15 +28,6 @@ function _emailBodyPlainText(content, opts, ctaEmail) {
 
   emailBody += `\r\n\r\n`
   emailBody += `Regards,\r\nThe ${settings.appName} Team - ${settings.siteUrl}`
-
-  if (
-    settings.email &&
-    settings.email.template &&
-    settings.email.template.customFooter
-  ) {
-    emailBody += `\r\n\r\n`
-    emailBody += settings.email.template.customFooter
-  }
 
   return emailBody
 }
@@ -123,6 +114,13 @@ function buildEmail(templateName, opts) {
   const template = templates[templateName]
   opts.siteUrl = settings.siteUrl
   opts.body = template.compiledTemplate(opts)
+  if (
+    settings.email &&
+    settings.email.template &&
+    settings.email.template.customFooter
+  ) {
+    opts.body += settings.email.template.customFooter
+  }
   return {
     subject: template.subject(opts),
     html: template.layout(opts),
@@ -146,7 +144,9 @@ templates.registered = ctaTemplate({
   },
   secondaryMessage() {
     return [
-      `If you have any questions or problems, please contact ${settings.adminEmail}`
+      `If you have any questions or problems, please contact ${
+        settings.adminEmail
+      }`
     ]
   },
   ctaText() {
@@ -163,7 +163,9 @@ templates.canceledSubscription = ctaTemplate({
   },
   message() {
     return [
-      `We are sorry to see you cancelled your ${settings.appName} premium subscription. Would you mind giving us some feedback on what the site is lacking at the moment via this quick survey?`
+      `We are sorry to see you cancelled your ${
+        settings.appName
+      } premium subscription. Would you mind giving us some feedback on what the site is lacking at the moment via this quick survey?`
     ]
   },
   secondaryMessage() {
@@ -223,16 +225,8 @@ templates.confirmEmail = ctaTemplate({
   title() {
     return 'Confirm Email'
   },
-  message(opts) {
-    return [
-      `Please confirm that you have added a new email, ${opts.to}, to your ${settings.appName} account.`
-    ]
-  },
-  secondaryMessage() {
-    return [
-      'If you did not request this, you can simply ignore this message.',
-      `If you have any questions or trouble confirming your email address, please get in touch with our support team at ${settings.adminEmail}.`
-    ]
+  message() {
+    return [`Please confirm your email on ${settings.appName}.`]
   },
   ctaText() {
     return 'Confirm Email'
@@ -296,7 +290,9 @@ templates.verifyEmailToJoinTeam = ctaTemplate({
   },
   message(opts) {
     return [
-      `Please click the button below to join the team and enjoy the benefits of an upgraded ${settings.appName} account.`
+      `Please click the button below to join the team and enjoy the benefits of an upgraded ${
+        settings.appName
+      } account.`
     ]
   },
   ctaText(opts) {
@@ -350,7 +346,9 @@ templates.ownershipTransferConfirmationPreviousOwner = NoCTAEmailTemplate({
       : `<b>${projectName}</b>`
     return [
       `As per your request, we have made ${nameAndEmail} the owner of ${projectNameDisplay}.`,
-      `If you haven't asked to change the owner of ${projectNameDisplay}, please get in touch with us via ${settings.adminEmail}.`
+      `If you haven't asked to change the owner of ${projectNameDisplay}, please get in touch with us via ${
+        settings.adminEmail
+      }.`
     ]
   }
 })
@@ -403,17 +401,23 @@ templates.userOnboardingEmail = NoCTAEmailTemplate({
   message(opts, isPlainText) {
     const learnLatexLink = EmailMessageHelper.displayLink(
       'Learn LaTeX in 30 minutes',
-      `${settings.siteUrl}/learn/latex/Learn_LaTeX_in_30_minutes?utm_source=overleaf&utm_medium=email&utm_campaign=onboarding`,
+      `${
+        settings.siteUrl
+      }/learn/latex/Learn_LaTeX_in_30_minutes?utm_source=overleaf&utm_medium=email&utm_campaign=onboarding`,
       isPlainText
     )
     const templatesLinks = EmailMessageHelper.displayLink(
       'Find a beautiful template',
-      `${settings.siteUrl}/latex/templates?utm_source=overleaf&utm_medium=email&utm_campaign=onboarding`,
+      `${
+        settings.siteUrl
+      }/latex/templates?utm_source=overleaf&utm_medium=email&utm_campaign=onboarding`,
       isPlainText
     )
     const collaboratorsLink = EmailMessageHelper.displayLink(
       'Work with your collaborators',
-      `${settings.siteUrl}/learn/how-to/Sharing_a_project?utm_source=overleaf&utm_medium=email&utm_campaign=onboarding`,
+      `${
+        settings.siteUrl
+      }/learn/how-to/Sharing_a_project?utm_source=overleaf&utm_medium=email&utm_campaign=onboarding`,
       isPlainText
     )
     const siteLink = EmailMessageHelper.displayLink(
@@ -432,7 +436,9 @@ templates.userOnboardingEmail = NoCTAEmailTemplate({
       isPlainText
     )
     return [
-      `Thanks for signing up for ${settings.appName} recently. We hope you've been finding it useful! Here are some key features to help you get the most out of the service:`,
+      `Thanks for signing up for ${
+        settings.appName
+      } recently. We hope you've been finding it useful! Here are some key features to help you get the most out of the service:`,
       `${learnLatexLink}: In this tutorial we provide a quick and easy first introduction to LaTeX with no prior knowledge required. By the time you are finished, you will have written your first LaTeX document!`,
       `${templatesLinks}: If you're looking for a template or example to get started, we've a large selection available in our template gallery, including CVs, project reports, journal articles and more.`,
       `${collaboratorsLink}: One of the key features of Overleaf is the ability to share projects and collaborate on them with other users. Find out how to share your projecs with your colleagues in this quick how-to guide.`,
@@ -477,8 +483,12 @@ templates.securityAlert = NoCTAEmailTemplate({
       `We are writing to let you know that ${actionDescribed} on ${dateFormatted} at ${timeFormatted} GMT.`,
       ...message,
       `If this was you, you can ignore this email.`,
-      `If this was not you, we recommend getting in touch with our support team at ${settings.adminEmail} to report this as potentially suspicious activity on your account.`,
-      `We also encourage you to read our ${helpLink} to keeping your ${settings.appName} account safe.`
+      `If this was not you, we recommend getting in touch with our support team at ${
+        settings.adminEmail
+      } to report this as potentially suspicious activity on your account.`,
+      `We also encourage you to read our ${helpLink} to keeping your ${
+        settings.appName
+      } account safe.`
     ]
   }
 })

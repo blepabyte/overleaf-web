@@ -26,7 +26,6 @@ export default App.controller('BinaryFileController', function(
     'bibtex',
     'txt',
     'tikz',
-    'mtx',
     'rtex',
     'md',
     'asy',
@@ -43,8 +42,7 @@ export default App.controller('BinaryFileController', function(
     'clo',
     'ldf',
     'rmd',
-    'lua',
-    'gv'
+    'lua'
   ]
   const imageExtensions = ['png', 'jpg', 'jpeg', 'gif']
   const previewableExtensions = []
@@ -89,7 +87,6 @@ export default App.controller('BinaryFileController', function(
   $scope.refreshFile = function(file) {
     $scope.refreshing = true
     $scope.refreshError = null
-    window.expectingLinkedFileRefreshedSocketFor = file.name
     ide.fileTreeManager
       .refreshLinkedFile(file)
       .then(function(response) {
@@ -98,10 +95,7 @@ export default App.controller('BinaryFileController', function(
         $timeout(
           () =>
             waitFor(() => ide.fileTreeManager.findEntityById(newFileId), 5000)
-              .then(newFile => {
-                ide.binaryFilesManager.openFile(newFile)
-                window.expectingLinkedFileRefreshedSocketFor = null
-              })
+              .then(newFile => ide.binaryFilesManager.openFile(newFile))
               .catch(err => console.warn(err)),
 
           0

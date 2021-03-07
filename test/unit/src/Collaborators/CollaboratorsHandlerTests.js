@@ -77,6 +77,7 @@ describe('CollaboratorsHandler', function() {
         '../ThirdPartyDataStore/TpdsProjectFlusher': this.TpdsProjectFlusher,
         '../Project/ProjectGetter': this.ProjectGetter,
         '../Project/ProjectHelper': this.ProjectHelper,
+        '../Errors/Errors': Errors,
         './CollaboratorsGetter': this.CollaboratorsGetter
       }
     })
@@ -98,7 +99,7 @@ describe('CollaboratorsHandler', function() {
       })
 
       it('should remove the user from mongo', async function() {
-        this.ProjectMock.expects('updateOne')
+        this.ProjectMock.expects('update')
           .withArgs(
             {
               _id: this.project._id
@@ -137,7 +138,7 @@ describe('CollaboratorsHandler', function() {
       })
 
       it('should remove the user from mongo', async function() {
-        this.ProjectMock.expects('updateOne')
+        this.ProjectMock.expects('update')
           .withArgs(
             {
               _id: this.oldArchivedProject._id
@@ -174,7 +175,7 @@ describe('CollaboratorsHandler', function() {
       })
 
       it('should remove the user from mongo', async function() {
-        this.ProjectMock.expects('updateOne')
+        this.ProjectMock.expects('update')
           .withArgs(
             {
               _id: this.archivedProject._id
@@ -202,7 +203,7 @@ describe('CollaboratorsHandler', function() {
   describe('addUserIdToProject', function() {
     describe('as readOnly', function() {
       beforeEach(async function() {
-        this.ProjectMock.expects('updateOne')
+        this.ProjectMock.expects('update')
           .withArgs(
             {
               _id: this.project._id
@@ -237,7 +238,7 @@ describe('CollaboratorsHandler', function() {
 
     describe('as readAndWrite', function() {
       beforeEach(async function() {
-        this.ProjectMock.expects('updateOne')
+        this.ProjectMock.expects('update')
           .withArgs(
             {
               _id: this.project._id
@@ -288,7 +289,7 @@ describe('CollaboratorsHandler', function() {
           this.userId,
           'readAndWrite'
         )
-        // Project.updateOne() should not be called. If it is, it will fail because
+        // Project.update() should not be called. If it is, it will fail because
         // the mock is not set up.
       })
     })
@@ -347,7 +348,7 @@ describe('CollaboratorsHandler', function() {
           .chain('exec')
           .resolves({ _id: projectId })
 
-        this.ProjectMock.expects('updateOne')
+        this.ProjectMock.expects('update')
           .withArgs(
             {
               _id: projectId
@@ -393,46 +394,51 @@ describe('CollaboratorsHandler', function() {
         })
         .chain('exec')
         .resolves(this.projects)
-      this.ProjectMock.expects('updateMany')
+      this.ProjectMock.expects('update')
         .withArgs(
           { owner_ref: this.fromUserId },
-          { $set: { owner_ref: this.toUserId } }
+          { $set: { owner_ref: this.toUserId } },
+          { multi: true }
         )
         .chain('exec')
         .resolves()
-      this.ProjectMock.expects('updateMany')
+      this.ProjectMock.expects('update')
         .withArgs(
           { collaberator_refs: this.fromUserId },
           {
             $addToSet: { collaberator_refs: this.toUserId }
-          }
+          },
+          { multi: true }
         )
         .chain('exec')
         .resolves()
-      this.ProjectMock.expects('updateMany')
+      this.ProjectMock.expects('update')
         .withArgs(
           { collaberator_refs: this.fromUserId },
           {
             $pull: { collaberator_refs: this.fromUserId }
-          }
+          },
+          { multi: true }
         )
         .chain('exec')
         .resolves()
-      this.ProjectMock.expects('updateMany')
+      this.ProjectMock.expects('update')
         .withArgs(
           { readOnly_refs: this.fromUserId },
           {
             $addToSet: { readOnly_refs: this.toUserId }
-          }
+          },
+          { multi: true }
         )
         .chain('exec')
         .resolves()
-      this.ProjectMock.expects('updateMany')
+      this.ProjectMock.expects('update')
         .withArgs(
           { readOnly_refs: this.fromUserId },
           {
             $pull: { readOnly_refs: this.fromUserId }
-          }
+          },
+          { multi: true }
         )
         .chain('exec')
         .resolves()
@@ -444,7 +450,7 @@ describe('CollaboratorsHandler', function() {
           this.fromUserId,
           this.toUserId
         )
-        await sleep(10) // let the background tasks run
+        await sleep(100) // let the background tasks run
         for (const project of this.projects) {
           expect(
             this.TpdsProjectFlusher.promises.flushProjectToTpds
@@ -462,7 +468,7 @@ describe('CollaboratorsHandler', function() {
           this.fromUserId,
           this.toUserId
         )
-        await sleep(10) // let the background tasks run
+        await sleep(100) // let the background tasks run
         expect(this.logger.err).to.have.been.called
       })
     })

@@ -1,5 +1,5 @@
 /* eslint-disable
-    node/handle-callback-err,
+    handle-callback-err,
     max-len,
     no-return-assign,
     no-unused-vars,
@@ -35,6 +35,7 @@ describe('AuthorizationManager', function() {
         '../../models/User': {
           User: (this.User = {})
         },
+        '../Errors/Errors': Errors,
         '../TokenAccess/TokenAccessHandler': (this.TokenAccessHandler = {
           validateTokenForAnonymousAccess: sinon
             .stub()

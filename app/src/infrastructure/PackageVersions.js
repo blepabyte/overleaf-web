@@ -5,10 +5,8 @@
  * DS207: Consider shorter variations of null checks
  * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
  */
-const ACE_VERSION = require('ace-builds/version')
 const version = {
-  // Upgrade instructions: https://github.com/overleaf/write_latex/wiki/Upgrading-Ace
-  ace: ACE_VERSION,
+  ace: '1.4.12', // Upgrade instructions: https://github.com/overleaf/write_latex/wiki/Upgrading-Ace
   fineuploader: '5.15.4'
 }
 

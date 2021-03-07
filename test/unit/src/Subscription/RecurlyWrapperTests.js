@@ -1,9 +1,10 @@
 /* eslint-disable
     camelcase,
-    node/handle-callback-err,
+    handle-callback-err,
     max-len,
     no-return-assign,
     no-unused-vars,
+    standard/no-callback-literal,
 */
 // TODO: This file was created by bulk-decaffeinate.
 // Fix any style issues and re-enable lint.
@@ -157,7 +158,9 @@ describe('RecurlyWrapper', function() {
             log: sinon.stub()
           },
           request: sinon.stub(),
-          './Errors': SubscriptionErrors
+          xml2js: require('xml2js'),
+          './Errors': SubscriptionErrors,
+          '../Errors/Errors': Errors
         }
       }
     ))

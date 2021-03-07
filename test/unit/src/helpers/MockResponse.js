@@ -21,7 +21,6 @@ class MockResponse {
 
     this.prototype.contentType = sinon.stub()
   }
-
   constructor() {
     this.rendered = false
     this.redirected = false

@@ -16,8 +16,7 @@ const UserRegistrationHandler = {
   _registrationRequestIsValid(body, callback) {
     const invalidEmail = AuthenticationManager.validateEmail(body.email || '')
     const invalidPassword = AuthenticationManager.validatePassword(
-      body.password || '',
-      body.email
+      body.password || ''
     )
     if (invalidEmail != null || invalidPassword != null) {
       return false
@@ -65,14 +64,14 @@ const UserRegistrationHandler = {
         async.series(
           [
             cb =>
-              User.updateOne(
+              User.update(
                 { _id: user._id },
                 { $set: { holdingAccount: false } },
                 cb
               ),
             cb =>
               AuthenticationManager.setUserPassword(
-                user,
+                user._id,
                 userDetails.password,
                 cb
               ),
@@ -129,7 +128,9 @@ const UserRegistrationHandler = {
               return callback(err)
             }
 
-            const setNewPasswordUrl = `${settings.siteUrl}/user/activate?token=${token}&user_id=${user._id}`
+            const setNewPasswordUrl = `${
+              settings.siteUrl
+            }/user/activate?token=${token}&user_id=${user._id}`
 
             EmailHandler.sendEmail(
               'registered',

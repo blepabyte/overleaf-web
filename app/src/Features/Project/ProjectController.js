@@ -10,7 +10,7 @@ const ProjectDuplicator = require('./ProjectDuplicator')
 const ProjectCreationHandler = require('./ProjectCreationHandler')
 const EditorController = require('../Editor/EditorController')
 const ProjectHelper = require('./ProjectHelper')
-const metrics = require('@overleaf/metrics')
+const metrics = require('metrics-sharelatex')
 const { User } = require('../../models/User')
 const TagsHandler = require('../Tags/TagsHandler')
 const SubscriptionLocator = require('../Subscription/SubscriptionLocator')
@@ -23,6 +23,7 @@ const ProjectUpdateHandler = require('./ProjectUpdateHandler')
 const ProjectGetter = require('./ProjectGetter')
 const PrivilegeLevels = require('../Authorization/PrivilegeLevels')
 const AuthenticationController = require('../Authentication/AuthenticationController')
+const PackageVersions = require('../../infrastructure/PackageVersions')
 const Sources = require('../Authorization/Sources')
 const TokenAccessHandler = require('../TokenAccess/TokenAccessHandler')
 const CollaboratorsGetter = require('../Collaborators/CollaboratorsGetter')
@@ -721,8 +722,6 @@ const ProjectController = {
         const allowedImageNames = ProjectHelper.getAllowedImagesForUser(
           sessionUser
         )
-        const wantsOldFileTreeUI =
-          req.query && req.query.new_file_tree_ui === 'false'
         AuthorizationManager.getPrivilegeLevelForProject(
           userId,
           projectId,
@@ -751,7 +750,8 @@ const ProjectController = {
             } else if (
               Settings.wsUrlV2 &&
               Settings.wsUrlV2Percentage > 0 &&
-              (ObjectId(projectId).getTimestamp() / 1000) % 100 <
+              (ObjectId(projectId).getTimestamp() / 1000) %
+                100 <
                 Settings.wsUrlV2Percentage
             ) {
               wsUrl = Settings.wsUrlV2
@@ -768,14 +768,15 @@ const ProjectController = {
             }
             metrics.inc(metricName)
 
+            const enableOptimize =
+              !!Settings.experimentId &&
+              (user.features && !user.features.zotero)
+
             if (userId) {
               AnalyticsManager.recordEvent(userId, 'project-opened', {
                 projectId: project._id
               })
             }
-
-            const wantsOldLogsUI =
-              req.query && req.query.new_logs_ui === 'false'
 
             res.render('project/editor', {
               title: project.name,
@@ -832,8 +833,11 @@ const ProjectController = {
               gitBridgePublicBaseUrl: Settings.gitBridgePublicBaseUrl,
               wsUrl,
               showSupport: Features.hasFeature('support'),
-              showNewLogsUI: user.alphaProgram && !wantsOldLogsUI,
-              showReactFileTree: user.betaProgram && !wantsOldFileTreeUI
+              gaOptimize: enableOptimize,
+              customOptimizeEvent: true,
+              experimentId: Settings.experimentId,
+              showNewLogsUI: req.query && req.query.new_logs_ui === 'true',
+              showNewChatUI: req.query && req.query.new_chat_ui === 'true'
             })
             timer.done()
           }
@@ -1040,15 +1044,17 @@ var defaultSettingsForAnonymousUser = userId => ({
   },
   featureSwitches: {
     github: false
-  },
-  alphaProgram: false,
-  betaProgram: false
+  }
 })
 
 var THEME_LIST = []
 function generateThemeList() {
   const files = fs.readdirSync(
-    Path.join(__dirname, '/../../../../node_modules/ace-builds/src-noconflict')
+    Path.join(
+      __dirname,
+      '/../../../../frontend/js/vendor/',
+      PackageVersions.lib('ace')
+    )
   )
   const result = []
   for (let file of files) {

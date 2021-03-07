@@ -36,7 +36,7 @@ describe('ProjectDownloadsController', function() {
         requires: {
           './ProjectZipStreamManager': (this.ProjectZipStreamManager = {}),
           '../Project/ProjectGetter': (this.ProjectGetter = {}),
-          '@overleaf/metrics': (this.metrics = {}),
+          'metrics-sharelatex': (this.metrics = {}),
           'logger-sharelatex': (this.logger = { log: sinon.stub() }),
           '../DocumentUpdater/DocumentUpdaterHandler': this
             .DocumentUpdaterHandler

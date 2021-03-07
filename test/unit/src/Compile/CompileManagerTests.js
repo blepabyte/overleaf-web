@@ -1,5 +1,5 @@
 /* eslint-disable
-    node/handle-callback-err,
+    handle-callback-err,
     max-len,
     no-return-assign,
     no-unused-vars,
@@ -45,7 +45,7 @@ describe('CompileManager', function() {
         '../User/UserGetter': (this.UserGetter = {}),
         './ClsiManager': (this.ClsiManager = {}),
         '../../infrastructure/RateLimiter': this.ratelimiter,
-        '@overleaf/metrics': (this.Metrics = {
+        'metrics-sharelatex': (this.Metrics = {
           Timer: (Timer = (function() {
             Timer = class Timer {
               static initClass() {

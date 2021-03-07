@@ -19,7 +19,7 @@ const ClsiStateManager = require('./ClsiStateManager')
 const _ = require('underscore')
 const ClsiFormatChecker = require('./ClsiFormatChecker')
 const DocumentUpdaterHandler = require('../DocumentUpdater/DocumentUpdaterHandler')
-const Metrics = require('@overleaf/metrics')
+const Metrics = require('metrics-sharelatex')
 const Errors = require('../Errors/Errors')
 
 const VALID_COMPILERS = ['pdflatex', 'latex', 'xelatex', 'lualatex']
@@ -136,7 +136,7 @@ const ClsiManager = {
     ClsiManager._makeRequest(projectId, opts, callback)
   },
 
-  deleteAuxFiles(projectId, userId, options, clsiserverid, callback) {
+  deleteAuxFiles(projectId, userId, options, callback) {
     if (options == null) {
       options = {}
     }
@@ -149,44 +149,27 @@ const ClsiManager = {
       url: compilerUrl,
       method: 'DELETE'
     }
-    ClsiManager._makeRequestWithClsiServerId(
-      projectId,
-      opts,
-      clsiserverid,
-      clsiErr => {
-        // always clear the project state from the docupdater, even if there
-        // was a problem with the request to the clsi
-        DocumentUpdaterHandler.clearProjectState(projectId, docUpdaterErr => {
-          ClsiCookieManager.clearServerId(projectId, redisError => {
-            if (clsiErr) {
-              return callback(
-                OError.tag(clsiErr, 'Failed to delete aux files', { projectId })
-              )
-            }
-            if (docUpdaterErr) {
-              return callback(
-                OError.tag(
-                  docUpdaterErr,
-                  'Failed to clear project state in doc updater',
-                  { projectId }
-                )
-              )
-            }
-            if (redisError) {
-              // redis errors need wrapping as the instance may be shared
-              return callback(
-                OError(
-                  'Failed to clear clsi persistence',
-                  { projectId },
-                  redisError
-                )
-              )
-            }
-            callback()
-          })
-        })
-      }
-    )
+    ClsiManager._makeRequest(projectId, opts, clsiErr => {
+      // always clear the project state from the docupdater, even if there
+      // was a problem with the request to the clsi
+      DocumentUpdaterHandler.clearProjectState(projectId, docUpdaterErr => {
+        if (clsiErr != null) {
+          return callback(
+            OError.tag(clsiErr, 'Failed to delete aux files', { projectId })
+          )
+        }
+        if (docUpdaterErr != null) {
+          return callback(
+            OError.tag(
+              docUpdaterErr,
+              'Failed to clear project state in doc updater',
+              { projectId }
+            )
+          )
+        }
+        callback()
+      })
+    })
   },
 
   _sendBuiltRequest(projectId, userId, req, options, callback) {
@@ -268,23 +251,6 @@ const ClsiManager = {
         )
       }
     )
-  },
-
-  _makeRequestWithClsiServerId(projectId, opts, clsiserverid, callback) {
-    if (clsiserverid) {
-      // ignore cookies and newBackend, go straight to the clsi node
-      opts.qs = Object.assign({ clsiserverid }, opts.qs)
-      request(opts, (err, response, body) => {
-        if (err) {
-          return callback(
-            OError.tag(err, 'error making request to CLSI', { projectId })
-          )
-        }
-        callback(null, response, body)
-      })
-    } else {
-      ClsiManager._makeRequest(projectId, opts, callback)
-    }
   },
 
   _makeRequest(projectId, opts, callback) {
@@ -618,7 +584,9 @@ const ClsiManager = {
   },
 
   getOutputFileStream(projectId, userId, buildId, outputFilePath, callback) {
-    const url = `${Settings.apis.clsi.url}/project/${projectId}/user/${userId}/build/${buildId}/output/${outputFilePath}`
+    const url = `${
+      Settings.apis.clsi.url
+    }/project/${projectId}/user/${userId}/build/${buildId}/output/${outputFilePath}`
     ClsiCookieManager.getCookieJar(projectId, (err, jar) => {
       if (err != null) {
         return callback(
@@ -798,7 +766,9 @@ const ClsiManager = {
       path = path.replace(/^\//, '') // Remove leading /
       resources.push({
         path,
-        url: `${Settings.apis.filestore.url}/project/${project._id}/file/${file._id}`,
+        url: `${Settings.apis.filestore.url}/project/${project._id}/file/${
+          file._id
+        }`,
         modified: file.created != null ? file.created.getTime() : undefined
       })
     }
@@ -821,7 +791,7 @@ const ClsiManager = {
     })
   },
 
-  wordCount(projectId, userId, file, options, clsiserverid, callback) {
+  wordCount(projectId, userId, file, options, callback) {
     ClsiManager._buildRequest(projectId, options, (err, req) => {
       if (err != null) {
         return callback(
@@ -846,32 +816,25 @@ const ClsiManager = {
         },
         method: 'GET'
       }
-      ClsiManager._makeRequestWithClsiServerId(
-        projectId,
-        opts,
-        clsiserverid,
-        (err, response, body) => {
-          if (err != null) {
-            return callback(
-              OError.tag(err, 'CLSI request failed', { projectId })
-            )
-          }
-          if (response.statusCode >= 200 && response.statusCode < 300) {
-            callback(null, body)
-          } else {
-            callback(
-              new OError(
-                `CLSI returned non-success code: ${response.statusCode}`,
-                {
-                  projectId,
-                  clsiResponse: body,
-                  statusCode: response.statusCode
-                }
-              )
-            )
-          }
+      ClsiManager._makeRequest(projectId, opts, (err, response, body) => {
+        if (err != null) {
+          return callback(OError.tag(err, 'CLSI request failed', { projectId }))
         }
-      )
+        if (response.statusCode >= 200 && response.statusCode < 300) {
+          callback(null, body)
+        } else {
+          callback(
+            new OError(
+              `CLSI returned non-success code: ${response.statusCode}`,
+              {
+                projectId,
+                clsiResponse: body,
+                statusCode: response.statusCode
+              }
+            )
+          )
+        }
+      })
     })
   }
 }

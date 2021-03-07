@@ -12,22 +12,22 @@ module.exports = _.template(`\
 		<style>.button td {
 	border-radius: 9999px; }
 
-.force-overleaf-style a,
-.force-overleaf-style a[href] {
+.avoid-auto-linking a,
+.avoid-auto-linking a[href] {
 	color: #138A07 !important;
 	text-decoration: none !important;
 	-moz-hyphens: none;
 	-ms-hyphens: none;
 	-webkit-hyphens: none;
 	hyphens: none; }
-	.force-overleaf-style a:visited,
-	.force-overleaf-style a[href]:visited {
+	.avoid-auto-linking a:visited,
+	.avoid-auto-linking a[href]:visited {
 		color: #138A07; }
-	.force-overleaf-style a:hover,
-	.force-overleaf-style a[href]:hover {
+	.avoid-auto-linking a:hover,
+	.avoid-auto-linking a[href]:hover {
 		color: #3d7935; }
-	.force-overleaf-style a:active,
-	.force-overleaf-style a[href]:active {
+	.avoid-auto-linking a:active,
+	.avoid-auto-linking a[href]:active {
 		color: #3d7935; }
 </style>
 		<style>@media only screen {
@@ -364,13 +364,7 @@ module.exports = _.template(`\
 							<table class="wrapper secondary" align="center" style="background: #E4E8EE; border-collapse: collapse; border-spacing: 0; padding: 0; text-align: left; vertical-align: top; width: 100%;"><tr style="padding: 0; text-align: left; vertical-align: top;"><td class="wrapper-inner" style="-moz-hyphens: auto; -webkit-hyphens: auto; Margin: 0; border-collapse: collapse !important; color: #5D6879; font-family: Helvetica, Arial, sans-serif; font-size: 16px; font-weight: normal; hyphens: auto; line-height: 1.3; margin: 0; padding: 0; text-align: left; vertical-align: top; word-wrap: break-word;">
 								<table class="spacer" style="border-collapse: collapse; border-spacing: 0; padding: 0; text-align: left; vertical-align: top; width: 100%;"><tbody><tr style="padding: 0; text-align: left; vertical-align: top;"><td height="10px" style="-moz-hyphens: auto; -webkit-hyphens: auto; Margin: 0; border-collapse: collapse !important; color: #5D6879; font-family: Helvetica, Arial, sans-serif; font-size: 10px; font-weight: normal; hyphens: auto; line-height: 10px; margin: 0; mso-line-height-rule: exactly; padding: 0; text-align: left; vertical-align: top; word-wrap: break-word;">&#xA0;</td></tr></tbody></table>
 								<p style="Margin: 0; Margin-bottom: 10px; color: #5D6879; font-family: Helvetica, Arial, sans-serif; font-size: 16px; font-weight: normal; line-height: 1.3; margin: 0; margin-bottom: 10px; padding: 0; text-align: left;"><small style="color: #5D6879; font-size: 80%;">
-									${
-                    settings.email &&
-                    settings.email.template &&
-                    settings.email.template.customFooter
-                      ? `${settings.email.template.customFooter}<br>`
-                      : ''
-                  }${settings.appName} &bull; <a href="${
+									${settings.appName} &bull; <a href="${
   settings.siteUrl
 }" style="Margin: 0; color: #0F7A06; font-family: Helvetica, Arial, sans-serif; font-weight: normal; line-height: 1.3; margin: 0; padding: 0; text-align: left; text-decoration: none;">${
   settings.siteUrl

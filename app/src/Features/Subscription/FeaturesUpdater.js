@@ -13,28 +13,12 @@ const UserGetter = require('../User/UserGetter')
 
 const FeaturesUpdater = {
   refreshFeatures(userId, callback = () => {}) {
-    UserGetter.getUser(userId, { _id: 1, features: 1 }, (err, user) => {
-      if (err) {
-        return callback(err)
+    FeaturesUpdater._computeFeatures(userId, (error, features) => {
+      if (error) {
+        return callback(error)
       }
-      const oldFeatures = _.clone(user.features)
-      FeaturesUpdater._computeFeatures(userId, (error, features) => {
-        if (error) {
-          return callback(error)
-        }
-        logger.log({ userId, features }, 'updating user features')
-        UserFeaturesUpdater.updateFeatures(userId, features, err => {
-          if (err) {
-            return callback(err)
-          }
-          if (oldFeatures.dropbox === true && features.dropbox === false) {
-            logger.log({ userId }, '[FeaturesUpdater] must unlink dropbox')
-            const Modules = require('../../infrastructure/Modules')
-            Modules.hooks.fire('removeDropbox', userId, () => {})
-          }
-          return callback()
-        })
-      })
+      logger.log({ userId, features }, 'updating user features')
+      UserFeaturesUpdater.updateFeatures(userId, features, callback)
     })
   },
 
@@ -208,26 +192,29 @@ const FeaturesUpdater = {
       // Special merging logic for non-boolean features
       if (key === 'compileGroup') {
         if (
-          features.compileGroup === 'priority' ||
-          featuresB.compileGroup === 'priority'
+          features['compileGroup'] === 'priority' ||
+          featuresB['compileGroup'] === 'priority'
         ) {
-          features.compileGroup = 'priority'
+          features['compileGroup'] = 'priority'
         } else {
-          features.compileGroup = 'standard'
+          features['compileGroup'] = 'standard'
         }
       } else if (key === 'collaborators') {
-        if (features.collaborators === -1 || featuresB.collaborators === -1) {
-          features.collaborators = -1
+        if (
+          features['collaborators'] === -1 ||
+          featuresB['collaborators'] === -1
+        ) {
+          features['collaborators'] = -1
         } else {
-          features.collaborators = Math.max(
-            features.collaborators || 0,
-            featuresB.collaborators || 0
+          features['collaborators'] = Math.max(
+            features['collaborators'] || 0,
+            featuresB['collaborators'] || 0
           )
         }
       } else if (key === 'compileTimeout') {
-        features.compileTimeout = Math.max(
-          features.compileTimeout || 0,
-          featuresB.compileTimeout || 0
+        features['compileTimeout'] = Math.max(
+          features['compileTimeout'] || 0,
+          featuresB['compileTimeout'] || 0
         )
       } else {
         // Boolean keys, true is better

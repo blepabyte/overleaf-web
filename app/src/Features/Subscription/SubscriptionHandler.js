@@ -6,6 +6,7 @@ const logger = require('logger-sharelatex')
 const SubscriptionUpdater = require('./SubscriptionUpdater')
 const LimitationsManager = require('./LimitationsManager')
 const EmailHandler = require('../Email/EmailHandler')
+const Events = require('../../infrastructure/Events')
 const Analytics = require('../Analytics/AnalyticsManager')
 
 const SubscriptionHandler = {
@@ -170,6 +171,7 @@ const SubscriptionHandler = {
                 ),
               ONE_HOUR_IN_MS
             )
+            Events.emit('cancelSubscription', user._id)
             Analytics.recordEvent(user._id, 'subscription-canceled')
             callback()
           }

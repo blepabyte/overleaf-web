@@ -1,6 +1,6 @@
 /* eslint-disable
     camelcase,
-    node/handle-callback-err,
+    handle-callback-err,
     max-len,
 */
 // TODO: This file was created by bulk-decaffeinate.
@@ -18,7 +18,9 @@ const Settings = require('settings-sharelatex')
 module.exports = CollaboratorsEmailHandler = {
   _buildInviteUrl(project, invite) {
     return (
-      `${Settings.siteUrl}/project/${project._id}/invite/token/${invite.token}?` +
+      `${Settings.siteUrl}/project/${project._id}/invite/token/${
+        invite.token
+      }?` +
       [
         `project_name=${encodeURIComponent(project.name)}`,
         `user_first_name=${encodeURIComponent(project.owner_ref.first_name)}`

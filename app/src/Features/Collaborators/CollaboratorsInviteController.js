@@ -1,6 +1,6 @@
 /* eslint-disable
     camelcase,
-    node/handle-callback-err,
+    handle-callback-err,
     max-len,
     no-unused-vars,
 */
@@ -23,9 +23,11 @@ const logger = require('logger-sharelatex')
 const Settings = require('settings-sharelatex')
 const EmailHelper = require('../Helpers/EmailHelper')
 const EditorRealTimeController = require('../Editor/EditorRealTimeController')
-const AnalyticsManager = require('../Analytics/AnalyticsManager')
+const NotificationsBuilder = require('../Notifications/NotificationsBuilder')
+const AnalyticsManger = require('../Analytics/AnalyticsManager')
 const AuthenticationController = require('../Authentication/AuthenticationController')
 const rateLimiter = require('../../infrastructure/RateLimiter')
+const request = require('request')
 
 module.exports = CollaboratorsInviteController = {
   getAllInvites(req, res, next) {
@@ -375,7 +377,7 @@ module.exports = CollaboratorsInviteController = {
           'project:membership:changed',
           { invites: true, members: true }
         )
-        AnalyticsManager.recordEvent(currentUser._id, 'project-invite-accept', {
+        AnalyticsManger.recordEvent(currentUser._id, 'project-invite-accept', {
           projectId,
           userId: currentUser._id
         })

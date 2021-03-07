@@ -1,73 +1,12 @@
-const { callbackify } = require('util')
 const { db } = require('../../infrastructure/mongodb')
-const metrics = require('@overleaf/metrics')
+const metrics = require('metrics-sharelatex')
 const logger = require('logger-sharelatex')
-const moment = require('moment')
-const settings = require('settings-sharelatex')
 const { promisifyAll } = require('../../util/promises')
-const {
-  promises: InstitutionsAPIPromises
-} = require('../Institutions/InstitutionsAPI')
+const { getUserAffiliations } = require('../Institutions/InstitutionsAPI')
 const InstitutionsHelper = require('../Institutions/InstitutionsHelper')
 const Errors = require('../Errors/Errors')
 const Features = require('../../infrastructure/Features')
 const { normalizeQuery, normalizeMultiQuery } = require('../Helpers/Mongo')
-
-function _emailInReconfirmNotificationPeriod(emailData, institutionData) {
-  const globalReconfirmPeriod = settings.reconfirmNotificationDays
-  if (!globalReconfirmPeriod) return false
-
-  // only show notification for institutions with reconfirmation enabled
-  if (!institutionData || !institutionData.maxConfirmationMonths) return false
-
-  if (!emailData.confirmedAt) return false
-
-  if (institutionData.ssoEnabled && !emailData.samlProviderId) {
-    // For SSO, only show notification for linked email
-    return false
-  }
-
-  // reconfirmedAt will not always be set, use confirmedAt as fallback
-  const lastConfirmed = emailData.reconfirmedAt || emailData.confirmedAt
-
-  const lastDayToReconfirm = moment(lastConfirmed).add(
-    institutionData.maxConfirmationMonths,
-    'months'
-  )
-  const notificationStarts = moment(lastDayToReconfirm).subtract(
-    globalReconfirmPeriod,
-    'days'
-  )
-
-  return moment().isAfter(notificationStarts)
-}
-
-async function getUserFullEmails(userId) {
-  const user = await UserGetter.promises.getUser(userId, {
-    email: 1,
-    emails: 1,
-    samlIdentifiers: 1
-  })
-
-  if (!user) {
-    throw new Error('User not Found')
-  }
-
-  if (!Features.hasFeature('affiliations')) {
-    return decorateFullEmails(user.email, user.emails, [], [])
-  }
-
-  const affiliationsData = await InstitutionsAPIPromises.getUserAffiliations(
-    userId
-  )
-
-  return decorateFullEmails(
-    user.email,
-    user.emails || [],
-    affiliationsData,
-    user.samlIdentifiers || []
-  )
-}
 
 const UserGetter = {
   getUser(query, projection, callback) {
@@ -89,7 +28,41 @@ const UserGetter = {
     )
   },
 
-  getUserFullEmails: callbackify(getUserFullEmails),
+  getUserFullEmails(userId, callback) {
+    this.getUser(userId, { email: 1, emails: 1, samlIdentifiers: 1 }, function(
+      error,
+      user
+    ) {
+      if (error) {
+        return callback(error)
+      }
+      if (!user) {
+        return callback(new Error('User not Found'))
+      }
+
+      if (!Features.hasFeature('affiliations')) {
+        return callback(
+          null,
+          decorateFullEmails(user.email, user.emails, [], [])
+        )
+      }
+
+      getUserAffiliations(userId, function(error, affiliationsData) {
+        if (error) {
+          return callback(error)
+        }
+        callback(
+          null,
+          decorateFullEmails(
+            user.email,
+            user.emails || [],
+            affiliationsData,
+            user.samlIdentifiers || []
+          )
+        )
+      })
+    })
+  },
 
   getUserByMainEmail(email, projection, callback) {
     email = email.trim()
@@ -186,8 +159,8 @@ var decorateFullEmails = (
   emailsData,
   affiliationsData,
   samlIdentifiers
-) => {
-  emailsData.forEach(function(emailData) {
+) =>
+  emailsData.map(function(emailData) {
     emailData.default = emailData.email === defaultEmail
 
     const affiliation = affiliationsData.find(
@@ -195,33 +168,31 @@ var decorateFullEmails = (
     )
     if (affiliation) {
       const { institution, inferred, role, department, licence } = affiliation
-      const inReconfirmNotificationPeriod = _emailInReconfirmNotificationPeriod(
-        emailData,
-        institution
-      )
       emailData.affiliation = {
         institution,
         inferred,
-        inReconfirmNotificationPeriod,
         role,
         department,
         licence
       }
+    } else {
+      emailsData.affiliation = null
     }
 
     if (emailData.samlProviderId) {
       emailData.samlIdentifier = samlIdentifiers.find(
         samlIdentifier => samlIdentifier.providerId === emailData.samlProviderId
       )
+    } else {
+      emailsData.samlIdentifier = null
     }
 
     emailData.emailHasInstitutionLicence = InstitutionsHelper.emailHasLicence(
       emailData
     )
-  })
 
-  return emailsData
-}
+    return emailData
+  })
 ;[
   'getUser',
   'getUserEmail',
@@ -233,9 +204,5 @@ var decorateFullEmails = (
   metrics.timeAsyncMethod(UserGetter, method, 'mongo.UserGetter', logger)
 )
 
-UserGetter.promises = promisifyAll(UserGetter, {
-  without: ['getUserFullEmails']
-})
-UserGetter.promises.getUserFullEmails = getUserFullEmails
-
+UserGetter.promises = promisifyAll(UserGetter)
 module.exports = UserGetter

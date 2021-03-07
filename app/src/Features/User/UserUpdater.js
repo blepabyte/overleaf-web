@@ -2,7 +2,7 @@ const logger = require('logger-sharelatex')
 const OError = require('@overleaf/o-error')
 const { db } = require('../../infrastructure/mongodb')
 const { normalizeQuery } = require('../Helpers/Mongo')
-const metrics = require('@overleaf/metrics')
+const metrics = require('metrics-sharelatex')
 const async = require('async')
 const { callbackify, promisify } = require('util')
 const UserGetter = require('./UserGetter')
@@ -155,51 +155,6 @@ async function setDefaultEmailAddress(
   }
 }
 
-async function confirmEmail(userId, email) {
-  // used for initial email confirmation (non-SSO and SSO)
-  // also used for reconfirmation of non-SSO emails
-  const confirmedAt = new Date()
-  email = EmailHelper.parseEmail(email)
-  if (email == null) {
-    throw new Error('invalid email')
-  }
-  logger.log({ userId, email }, 'confirming user email')
-
-  try {
-    await InstitutionsAPIPromises.addAffiliation(userId, email, { confirmedAt })
-  } catch (error) {
-    throw OError.tag(error, 'problem adding affiliation while confirming email')
-  }
-
-  const query = {
-    _id: userId,
-    'emails.email': email
-  }
-
-  // only update confirmedAt if it was not previously set
-  const update = {
-    $set: {
-      'emails.$.reconfirmedAt': confirmedAt
-    },
-    $min: {
-      'emails.$.confirmedAt': confirmedAt
-    }
-  }
-
-  if (Features.hasFeature('affiliations')) {
-    update.$unset = {
-      'emails.$.affiliationUnchecked': 1
-    }
-  }
-
-  const res = await UserUpdater.promises.updateUser(query, update)
-
-  if (res.n === 0) {
-    throw new Errors.NotFoundError('user id and email do no match')
-  }
-  await FeaturesUpdater.promises.refreshFeatures(userId)
-}
-
 const UserUpdater = {
   addAffiliationForNewUser(userId, email, affiliationOptions, callback) {
     if (callback == null) {
@@ -321,7 +276,49 @@ const UserUpdater = {
   // must be one of the user's multiple emails (`emails` attribute)
   setDefaultEmailAddress: callbackify(setDefaultEmailAddress),
 
-  confirmEmail: callbackify(confirmEmail),
+  confirmEmail(userId, email, confirmedAt, callback) {
+    if (arguments.length === 3) {
+      callback = confirmedAt
+      confirmedAt = new Date()
+    }
+    email = EmailHelper.parseEmail(email)
+    if (email == null) {
+      return callback(new Error('invalid email'))
+    }
+    logger.log({ userId, email }, 'confirming user email')
+    addAffiliation(userId, email, { confirmedAt }, error => {
+      if (error != null) {
+        OError.tag(error, 'problem adding affiliation while confirming email')
+        return callback(error)
+      }
+
+      const query = {
+        _id: userId,
+        'emails.email': email
+      }
+      const update = {
+        $set: {
+          'emails.$.confirmedAt': confirmedAt
+        }
+      }
+      if (Features.hasFeature('affiliations')) {
+        update['$unset'] = {
+          'emails.$.affiliationUnchecked': 1
+        }
+      }
+      UserUpdater.updateUser(query, update, (error, res) => {
+        if (error != null) {
+          return callback(error)
+        }
+        if (res.n === 0) {
+          return callback(
+            new Errors.NotFoundError('user id and email do no match')
+          )
+        }
+        FeaturesUpdater.refreshFeatures(userId, callback)
+      })
+    })
+  },
 
   removeReconfirmFlag(userId, callback) {
     UserUpdater.updateUser(
@@ -347,7 +344,7 @@ const UserUpdater = {
 const promises = {
   addAffiliationForNewUser: promisify(UserUpdater.addAffiliationForNewUser),
   addEmailAddress,
-  confirmEmail,
+  confirmEmail: promisify(UserUpdater.confirmEmail),
   setDefaultEmailAddress,
   updateUser: promisify(UserUpdater.updateUser),
   removeReconfirmFlag: promisify(UserUpdater.removeReconfirmFlag)

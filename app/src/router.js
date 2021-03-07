@@ -8,7 +8,7 @@ const Settings = require('settings-sharelatex')
 const TpdsController = require('./Features/ThirdPartyDataStore/TpdsController')
 const SubscriptionRouter = require('./Features/Subscription/SubscriptionRouter')
 const UploadsRouter = require('./Features/Uploads/UploadsRouter')
-const metrics = require('@overleaf/metrics')
+const metrics = require('metrics-sharelatex')
 const ReferalController = require('./Features/Referal/ReferalController')
 const AuthenticationController = require('./Features/Authentication/AuthenticationController')
 const TagsController = require('./Features/Tags/TagsController')
@@ -49,7 +49,6 @@ const TemplatesRouter = require('./Features/Templates/TemplatesRouter')
 const InstitutionsController = require('./Features/Institutions/InstitutionsController')
 const UserMembershipRouter = require('./Features/UserMembership/UserMembershipRouter')
 const SystemMessageController = require('./Features/SystemMessages/SystemMessageController')
-const { Joi, validate } = require('./infrastructure/Validation')
 
 const logger = require('logger-sharelatex')
 const _ = require('underscore')
@@ -369,14 +368,6 @@ function initialize(webRouter, privateApiRouter, publicApiRouter) {
     CompileController.downloadPdf
   )
 
-  // Align with limits defined in CompileController.downloadPdf
-  const rateLimiterMiddlewareOutputFiles = RateLimiterMiddleware.rateLimit({
-    endpointName: 'misc-output-download',
-    params: ['Project_id'],
-    maxRequests: 1000,
-    timeInterval: 60 * 60
-  })
-
   // Used by the pdf viewers
   webRouter.get(
     /^\/project\/([^/]*)\/output\/(.*)$/,
@@ -388,7 +379,6 @@ function initialize(webRouter, privateApiRouter, publicApiRouter) {
       req.params = params
       next()
     },
-    rateLimiterMiddlewareOutputFiles,
     AuthorizationMiddleware.ensureUserCanReadProject,
     CompileController.getFileFromClsi
   )
@@ -404,7 +394,6 @@ function initialize(webRouter, privateApiRouter, publicApiRouter) {
       req.params = params
       next()
     },
-    rateLimiterMiddlewareOutputFiles,
     AuthorizationMiddleware.ensureUserCanReadProject,
     CompileController.getFileFromClsi
   )
@@ -421,7 +410,6 @@ function initialize(webRouter, privateApiRouter, publicApiRouter) {
       req.params = params
       next()
     },
-    rateLimiterMiddlewareOutputFiles,
     AuthorizationMiddleware.ensureUserCanReadProject,
     CompileController.getFileFromClsi
   )
@@ -439,14 +427,12 @@ function initialize(webRouter, privateApiRouter, publicApiRouter) {
       req.params = params
       next()
     },
-    rateLimiterMiddlewareOutputFiles,
     AuthorizationMiddleware.ensureUserCanReadProject,
     CompileController.getFileFromClsi
   )
 
   webRouter.delete(
     '/project/:Project_id/output',
-    validate({ query: { clsiserverid: Joi.string() } }),
     AuthorizationMiddleware.ensureUserCanReadProject,
     CompileController.deleteAuxFiles
   )
@@ -462,7 +448,6 @@ function initialize(webRouter, privateApiRouter, publicApiRouter) {
   )
   webRouter.get(
     '/project/:Project_id/wordcount',
-    validate({ query: { clsiserverid: Joi.string() } }),
     AuthorizationMiddleware.ensureUserCanReadProject,
     CompileController.wordCount
   )
@@ -621,21 +606,13 @@ function initialize(webRouter, privateApiRouter, publicApiRouter) {
   webRouter.get(
     '/project/:project_id/metadata',
     AuthorizationMiddleware.ensureUserCanReadProject,
-    Settings.allowAnonymousReadAndWriteSharing
-      ? (req, res, next) => {
-          next()
-        }
-      : AuthenticationController.requireLogin(),
+    AuthenticationController.requireLogin(),
     MetaController.getMetadata
   )
   webRouter.post(
     '/project/:project_id/doc/:doc_id/metadata',
     AuthorizationMiddleware.ensureUserCanReadProject,
-    Settings.allowAnonymousReadAndWriteSharing
-      ? (req, res, next) => {
-          next()
-        }
-      : AuthenticationController.requireLogin(),
+    AuthenticationController.requireLogin(),
     MetaController.broadcastMetadataForDoc
   )
   privateApiRouter.post(
@@ -1000,16 +977,6 @@ function initialize(webRouter, privateApiRouter, publicApiRouter) {
     '/health_check',
     HealthCheckController.checkActiveHandles,
     HealthCheckController.checkApi
-  )
-  publicApiRouter.get(
-    '/health_check/full',
-    HealthCheckController.checkActiveHandles,
-    HealthCheckController.check
-  )
-  privateApiRouter.get(
-    '/health_check/full',
-    HealthCheckController.checkActiveHandles,
-    HealthCheckController.check
   )
 
   publicApiRouter.get('/health_check/redis', HealthCheckController.checkRedis)

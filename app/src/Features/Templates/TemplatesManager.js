@@ -41,7 +41,9 @@ const TemplatesManager = {
     _callback
   ) {
     const callback = _.once(_callback)
-    const zipUrl = `${settings.apis.v1.url}/api/v1/sharelatex/templates/${templateVersionId}`
+    const zipUrl = `${
+      settings.apis.v1.url
+    }/api/v1/sharelatex/templates/${templateVersionId}`
     const zipReq = request(zipUrl, {
       auth: {
         user: settings.apis.v1.user,
@@ -110,7 +112,7 @@ const TemplatesManager = {
                   fromV1TemplateId: templateId,
                   fromV1TemplateVersionId: templateVersionId
                 }
-                return Project.updateOne(
+                return Project.update(
                   { _id: project._id },
                   update,
                   {},

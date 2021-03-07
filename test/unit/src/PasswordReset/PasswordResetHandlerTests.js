@@ -1,5 +1,5 @@
 /* eslint-disable
-    node/handle-callback-err,
+    handle-callback-err,
     max-len,
     no-return-assign,
     no-unused-vars,
@@ -39,6 +39,7 @@ describe('PasswordResetHandler', function() {
     }
     this.EmailHandler = { sendEmail: sinon.stub() }
     this.AuthenticationManager = {
+      setUserPasswordInV1: sinon.stub(),
       setUserPasswordInV2: sinon.stub(),
       promises: {
         setUserPassword: sinon.stub().resolves()
@@ -226,7 +227,7 @@ describe('PasswordResetHandler', function() {
             email: this.email
           })
         this.AuthenticationManager.promises.setUserPassword
-          .withArgs(this.user, this.password)
+          .withArgs(this.user._id, this.password)
           .resolves(true)
       })
 
@@ -354,18 +355,18 @@ describe('PasswordResetHandler', function() {
                 new Error('oops')
               )
             })
-            it('should return the error', function(done) {
+            it('should return the error and not update the password', function(done) {
               this.PasswordResetHandler.setNewUserPassword(
                 this.token,
                 this.password,
                 this.auditLog,
-                (error, _result) => {
+                (error, result) => {
                   expect(error).to.exist
                   expect(
                     this.UserAuditLogHandler.promises.addEntry.callCount
                   ).to.equal(1)
                   expect(this.AuthenticationManager.promises.setUserPassword).to
-                    .have.been.called
+                    .not.have.been.called
                   done()
                 }
               )
@@ -385,7 +386,7 @@ describe('PasswordResetHandler', function() {
             email: this.email
           })
         this.AuthenticationManager.promises.setUserPassword
-          .withArgs(this.user, this.password)
+          .withArgs(this.user._id, this.password)
           .resolves(true)
       })
 

@@ -1,7 +1,6 @@
 const { expect } = require('chai')
 const sinon = require('sinon')
 const SandboxedModule = require('sandboxed-module')
-const Errors = require('../../../../app/src/Features/Errors/Errors')
 
 const MODULE_PATH =
   '../../../../app/src/Features/FileStore/FileStoreController.js'
@@ -13,6 +12,7 @@ describe('FileStoreController', function() {
       getFileSize: sinon.stub()
     }
     this.ProjectLocator = { findElement: sinon.stub() }
+    this.Errors = { NotFoundError: sinon.stub() }
     this.controller = SandboxedModule.require(MODULE_PATH, {
       globals: {
         console: console
@@ -24,6 +24,7 @@ describe('FileStoreController', function() {
           err: sinon.stub()
         }),
         '../Project/ProjectLocator': this.ProjectLocator,
+        '../Errors/Errors': this.Errors,
         './FileStoreHandler': this.FileStoreHandler
       }
     })
@@ -226,7 +227,7 @@ describe('FileStoreController', function() {
     })
 
     it('returns 404 on NotFoundError', function(done) {
-      this.FileStoreHandler.getFileSize.yields(new Errors.NotFoundError())
+      this.FileStoreHandler.getFileSize.yields(new this.Errors.NotFoundError())
 
       this.res.end = () => {
         expect(this.res.status.lastCall.args).to.deep.equal([404])

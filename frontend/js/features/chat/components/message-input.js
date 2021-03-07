@@ -15,12 +15,8 @@ function MessageInput({ resetUnreadMessages, sendMessage }) {
 
   return (
     <div className="new-message">
-      <label htmlFor="chat-input" className="sr-only">
-        {t('your_message')}
-      </label>
       <textarea
-        id="chat-input"
-        placeholder={`${t('your_message')}…`}
+        placeholder={`${t('your_message')}...`}
         onKeyDown={handleKeyDown}
         onClick={resetUnreadMessages}
       />

@@ -3,7 +3,7 @@ const EditorController = require('./EditorController')
 const ProjectGetter = require('../Project/ProjectGetter')
 const AuthorizationManager = require('../Authorization/AuthorizationManager')
 const ProjectEditorHandler = require('../Project/ProjectEditorHandler')
-const Metrics = require('@overleaf/metrics')
+const Metrics = require('metrics-sharelatex')
 const CollaboratorsGetter = require('../Collaborators/CollaboratorsGetter')
 const CollaboratorsInviteHandler = require('../Collaborators/CollaboratorsInviteHandler')
 const CollaboratorsHandler = require('../Collaborators/CollaboratorsHandler')
@@ -170,7 +170,6 @@ async function addFolder(req, res, next) {
   const projectId = req.params.Project_id
   const { name } = req.body
   const parentFolderId = req.body.parent_folder_id
-  const userId = AuthenticationController.getLoggedInUserId(req)
   if (!_nameIsAcceptableLength(name)) {
     return res.sendStatus(400)
   }
@@ -179,8 +178,7 @@ async function addFolder(req, res, next) {
       projectId,
       parentFolderId,
       name,
-      'editor',
-      userId
+      'editor'
     )
     res.json(doc)
   } catch (err) {

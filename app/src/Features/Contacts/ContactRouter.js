@@ -1,26 +1,18 @@
+// TODO: This file was created by bulk-decaffeinate.
+// Sanity-check the conversion and remove this comment.
+/*
+ * decaffeinate suggestions:
+ * DS102: Remove unnecessary code created because of implicit returns
+ * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
+ */
 const AuthenticationController = require('../Authentication/AuthenticationController')
 const ContactController = require('./ContactController')
-const Settings = require('settings-sharelatex')
-
-function contactsAuthenticationMiddleware() {
-  if (!Settings.allowAnonymousReadAndWriteSharing) {
-    return AuthenticationController.requireLogin()
-  } else {
-    return (req, res, next) => {
-      if (AuthenticationController.isUserLoggedIn(req)) {
-        next()
-      } else {
-        res.send({ contacts: [] })
-      }
-    }
-  }
-}
 
 module.exports = {
-  apply(webRouter) {
-    webRouter.get(
+  apply(webRouter, apiRouter) {
+    return webRouter.get(
       '/user/contacts',
-      contactsAuthenticationMiddleware(),
+      AuthenticationController.requireLogin(),
       ContactController.getContacts
     )
   }

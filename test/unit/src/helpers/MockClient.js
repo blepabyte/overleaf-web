@@ -22,17 +22,14 @@ module.exports = MockClient = class MockClient {
     this.disconnect = sinon.stub()
     this.id = idCounter++
   }
-
   set(key, value, callback) {
     this.attributes[key] = value
     if (callback != null) {
       return callback()
     }
   }
-
   get(key, callback) {
     return callback(null, this.attributes[key])
   }
-
   disconnect() {}
 }

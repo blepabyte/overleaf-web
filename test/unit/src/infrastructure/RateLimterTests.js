@@ -1,5 +1,5 @@
 /* eslint-disable
-    node/handle-callback-err,
+    handle-callback-err,
     max-len,
     no-return-assign,
     no-unused-vars,
@@ -50,7 +50,7 @@ describe('RateLimiter', function() {
         log: sinon.stub(),
         err: sinon.stub()
       }),
-      '@overleaf/metrics': (this.Metrics = { inc: sinon.stub() }),
+      'metrics-sharelatex': (this.Metrics = { inc: sinon.stub() }),
       './RedisWrapper': this.RedisWrapper
     }
 

@@ -2,7 +2,7 @@ const Path = require('path')
 const express = require('express')
 const Settings = require('settings-sharelatex')
 const logger = require('logger-sharelatex')
-const metrics = require('@overleaf/metrics')
+const metrics = require('metrics-sharelatex')
 const expressLocals = require('./ExpressLocals')
 const Validation = require('./Validation')
 const Router = require('../router')
@@ -225,14 +225,21 @@ logger.info('creating HTTP server'.yellow)
 const server = require('http').createServer(app)
 
 // provide settings for separate web and api processes
-if (Settings.enabledServices.includes('api')) {
+// if enableApiRouter and enableWebRouter are not defined they default
+// to true.
+const notDefined = x => x == null
+const enableApiRouter =
+  Settings.web != null ? Settings.web.enableApiRouter : undefined
+if (enableApiRouter || notDefined(enableApiRouter)) {
   logger.info('providing api router')
   app.use(privateApiRouter)
   app.use(Validation.errorMiddleware)
   app.use(ErrorController.handleApiError)
 }
 
-if (Settings.enabledServices.includes('web')) {
+const enableWebRouter =
+  Settings.web != null ? Settings.web.enableWebRouter : undefined
+if (enableWebRouter || notDefined(enableWebRouter)) {
   logger.info('providing web router')
 
   if (app.get('env') === 'production') {

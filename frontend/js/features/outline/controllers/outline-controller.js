@@ -1,7 +1,6 @@
 import App from '../../../base'
 import OutlinePane from '../components/outline-pane'
 import { react2angular } from 'react2angular'
-import { rootContext } from '../../../shared/context/root-context'
 
 App.controller('OutlineController', function($scope, ide, eventTracking) {
   $scope.isTexFile = false
@@ -31,14 +30,4 @@ App.controller('OutlineController', function($scope, ide, eventTracking) {
 })
 
 // Wrap React component as Angular component. Only needed for "top-level" component
-App.component(
-  'outlinePane',
-  react2angular(rootContext.use(OutlinePane), [
-    'outline',
-    'jumpToLine',
-    'highlightedLine',
-    'eventTracking',
-    'onToggle',
-    'isTexFile'
-  ])
-)
+App.component('outlinePane', react2angular(OutlinePane))

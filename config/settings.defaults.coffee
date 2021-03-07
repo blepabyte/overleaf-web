@@ -42,13 +42,14 @@ module.exports = settings =
 	# ---------
 	mongo:
 		options: {
-			appname: 'web'
 			useUnifiedTopology: (process.env['MONGO_USE_UNIFIED_TOPOLOGY'] || 'true') == 'true',
 			poolSize: parseInt(process.env['MONGO_POOL_SIZE'], 10) || 10,
 			serverSelectionTimeoutMS: parseInt(process.env['MONGO_SERVER_SELECTION_TIMEOUT'], 10) || 60000,
 			socketTimeoutMS: parseInt(process.env['MONGO_SOCKET_TIMEOUT'], 10) || 30000,
 		},
 		url : process.env['MONGO_CONNECTION_STRING'] || process.env['MONGO_URL'] || "mongodb://#{process.env['MONGO_HOST'] or '127.0.0.1'}/sharelatex"
+		poolSize: parseInt(process.env['MONGO_POOL_SIZE'], 10) || 10
+		socketTimeoutMS: parseInt(process.env['MONGO_SOCKET_TIMEOUT'], 10) || 30000
 
 	redis:
 		web:
@@ -92,11 +93,6 @@ module.exports = settings =
 			port: process.env['REDIS_PORT'] || "6379"
 			password: process.env["REDIS_PASSWORD"] or ""
 			maxRetriesPerRequest: parseInt(process.env["REDIS_MAX_RETRIES_PER_REQUEST"] || '20')
-
-		queues:
-			host: process.env['QUEUES_REDIS_HOST'] || 'localhost'
-			port: process.env['QUEUES_REDIS_PORT'] || '6379'
-			password: process.env['QUEUES_REDIS_PASSWORD'] || ''
 
 	# Service locations
 	# -----------------
@@ -183,7 +179,6 @@ module.exports = settings =
 			url: process.env['LINKED_URL_PROXY']
 		thirdpartyreferences:
 			url: "http://#{process.env['THIRD_PARTY_REFERENCES_HOST'] or 'localhost'}:3046"
-			timeout: parseInt(process.env['THIRD_PARTY_REFERENCES_TIMEOUT'] || '30000', 10)
 		v1:
 			url: v1Api.url
 			user: v1Api.user
@@ -258,10 +253,6 @@ module.exports = settings =
 		enabled: process.env['TWO_FACTOR_AUTHENTICATION_ENABLED'] == 'true'
 		requiredForStaff: process.env['TWO_FACTOR_AUTHENTICATION_REQUIRED_FOR_STAFF'] == 'true'
 
-	jwt:
-		key: process.env['OT_JWT_AUTH_KEY']
-		algorithm: process.env['OT_JWT_AUTH_ALG'] || 'HS256'
-
 	# Default features
 	# ----------------
 	#
@@ -297,8 +288,6 @@ module.exports = settings =
 	# ------
 	#
 	i18n:
-		checkForHTMLInVars: process.env['I18N_CHECK_FOR_HTML_IN_VARS'] == 'true'
-		escapeHTMLInVars: process.env['I18N_ESCAPE_HTML_IN_VARS'] == 'true'
 		subdomainLang:
 			www: {lngCode:"en", url: siteUrl}
 		defaultLng: "en"
@@ -512,7 +501,6 @@ module.exports = settings =
 		password: process.env['SMOKE_TEST_PASSWORD']
 		projectId: process.env['SMOKE_TEST_PROJECT_ID']
 		rateLimitSubject: process.env['SMOKE_TEST_RATE_LIMIT_SUBJECT'] or "127.0.0.1"
-		stepTimeout: parseInt(process.env['SMOKE_TEST_STEP_TIMEOUT'] or "10000", 10)
 
 	appName: process.env['APP_NAME'] or "ShareLaTeX (Community Edition)"
 
@@ -522,6 +510,8 @@ module.exports = settings =
 	salesEmail: process.env['SALES_EMAIL'] or "placeholder@example.com"
 
 	statusPageUrl: process.env['OVERLEAF_STATUS_URL'] or "status.overleaf.com"
+
+	brandPrefix: process.env['BRAND_PREFIX'] or "sl-" # Set to 'ol-' for overleaf styles
 
 	nav:
 		title: "ShareLaTeX Community Edition"
@@ -626,9 +616,6 @@ module.exports = settings =
 			everyone: process.env['RATE_LIMIT_AUTO_COMPILE_EVERYONE'] or 100
 			standard: process.env['RATE_LIMIT_AUTO_COMPILE_STANDARD'] or 25
 
-	analytics:
-		enabled: process.env['ANALYTICS_ENABLED'] == 'true'
-
 	# currentImage: "texlive-full:2017.1"
 	# imageRoot: "<DOCKER REPOSITORY ROOT>" # without any trailing slash
 
@@ -645,8 +632,6 @@ module.exports = settings =
 	# 	{imageName: 'texlive-full:2015.1', imageDesc: 'Legacy SL TeXLive 2015'}
 	# 	{imageName: 'texlive-full:2014.2', imageDesc: 'Legacy SL TeXLive 2014.2'}
 	# ]
-
-	enabledServices: (process.env['ENABLED_SERVICES'] || 'web,api').split(',').map((s) => s.trim())
 
 	# module options
 	# ----------

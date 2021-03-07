@@ -26,6 +26,10 @@ describe('ThirdPartyIdentityManager', function() {
         '../../../../app/src/Features/Email/EmailHandler': (this.EmailHandler = {
           sendEmail: sinon.stub().yields()
         }),
+        Errors: (this.Errors = {
+          ThirdPartyIdentityExistsError: sinon.stub(),
+          ThirdPartyUserNotFoundError: sinon.stub()
+        }),
         'logger-sharelatex': (this.logger = {
           error: sinon.stub()
         }),
@@ -113,12 +117,13 @@ describe('ThirdPartyIdentityManager', function() {
             this.auditLog,
             error => {
               expect(error).to.not.exist
-              expect(this.logger.error.lastCall).to.be.calledWithExactly(
-                {
-                  err: anError,
-                  userId: this.userId
-                },
-                'could not send security alert email when Google account linked'
+              const loggerCall = this.logger.error.getCall(0)
+              expect(loggerCall.args[0]).to.deep.equal({
+                error: anError,
+                userId: this.userId
+              })
+              expect(loggerCall.args[1]).to.contain(
+                'could not send security alert email when Google linked'
               )
               done()
             }
@@ -137,7 +142,7 @@ describe('ThirdPartyIdentityManager', function() {
       const emailCall = this.EmailHandler.sendEmail.getCall(0)
       expect(emailCall.args[0]).to.equal('securityAlert')
       expect(emailCall.args[1].actionDescribed).to.contain(
-        'an Orcid account was unlinked from'
+        'an Orcid account is no longer linked'
       )
     })
     it('should update user audit log', async function() {
@@ -184,12 +189,13 @@ describe('ThirdPartyIdentityManager', function() {
             this.auditLog,
             error => {
               expect(error).to.not.exist
-              expect(this.logger.error.lastCall).to.be.calledWithExactly(
-                {
-                  err: anError,
-                  userId: this.userId
-                },
-                'could not send security alert email when Google account no longer linked'
+              const loggerCall = this.logger.error.getCall(0)
+              expect(loggerCall.args[0]).to.deep.equal({
+                error: anError,
+                userId: this.userId
+              })
+              expect(loggerCall.args[1]).to.contain(
+                'could not send security alert email when Google no longer linked'
               )
               done()
             }

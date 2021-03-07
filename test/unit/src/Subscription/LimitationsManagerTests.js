@@ -1,6 +1,6 @@
 /* eslint-disable
     camelcase,
-    node/handle-callback-err,
+    handle-callback-err,
     max-len,
     no-return-assign,
     no-unused-vars,
@@ -19,6 +19,7 @@ const modulePath = require('path').join(
   __dirname,
   '../../../../app/src/Features/Subscription/LimitationsManager'
 )
+const Settings = require('settings-sharelatex')
 
 describe('LimitationsManager', function() {
   beforeEach(function() {

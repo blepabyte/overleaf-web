@@ -9,11 +9,11 @@
  * DS207: Consider shorter variations of null checks
  * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
  */
-const metrics = require('@overleaf/metrics')
-metrics.initialize(process.env.METRICS_APP_NAME || 'web')
+const metrics = require('metrics-sharelatex')
+metrics.initialize(process.env['METRICS_APP_NAME'] || 'web')
 const Settings = require('settings-sharelatex')
 const logger = require('logger-sharelatex')
-logger.initialize(process.env.METRICS_APP_NAME || 'web')
+logger.initialize(process.env['METRICS_APP_NAME'] || 'web')
 logger.logger.serializers.user = require('./app/src/infrastructure/LoggerSerializers').user
 logger.logger.serializers.docs = require('./app/src/infrastructure/LoggerSerializers').docs
 logger.logger.serializers.files = require('./app/src/infrastructure/LoggerSerializers').files
@@ -25,10 +25,6 @@ if ((Settings.sentry != null ? Settings.sentry.dsn : undefined) != null) {
 metrics.memory.monitor(logger)
 const Server = require('./app/src/infrastructure/Server')
 const mongodb = require('./app/src/infrastructure/mongodb')
-const mongoose = require('./app/src/infrastructure/Mongoose')
-const Queues = require('./app/src/infrastructure/Queues')
-
-Queues.initialize()
 
 if (Settings.catchErrors) {
   process.removeAllListeners('uncaughtException')
@@ -42,10 +38,11 @@ if (!module.parent) {
   // Called directly
 
   // We want to make sure that we provided a password through the environment.
-  if (!process.env.WEB_API_USER || !process.env.WEB_API_PASSWORD) {
+  if (!process.env['WEB_API_USER'] || !process.env['WEB_API_PASSWORD']) {
     throw new Error('No API user and password provided')
   }
-  Promise.all([mongodb.waitForDb(), mongoose.connectionPromise])
+  mongodb
+    .waitForDb()
     .then(() => {
       Server.server.listen(port, host, function() {
         logger.info(`web starting up, listening on ${host}:${port}`)
