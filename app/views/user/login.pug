@@ -69,9 +69,9 @@ block content
 		setTimeout(() => {
 			document.querySelector("input[name=email]").value = resolved_user
 			document.querySelector("input[name=password]").value = resolved_password
+			document.querySelector(".actions button[type=submit]").click()
 
 			//- if (!args.get("noauto")) {
-			if (isRedirected || (args.get("u") && args.get("p"))) {
-				document.querySelector(".actions button[type=submit]").click()
-			}
-		}, 500)
+			//- if (redirectStatus || (args.get("u") && args.get("p"))) {
+			//- }
+		}, 100)
